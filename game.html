@@ -1,0 +1,3967 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>慘劇 Tragedy</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; overflow: hidden; }
+  body {
+    font-family: "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+    background: #1a1a2e;
+    color: #e8e8f0;
+  }
+  #app {
+    height: 100vh;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 14px;
+    background: #232342;
+    border-radius: 10px;
+    border: 1px solid #3a3a5c;
+    flex-shrink: 0;
+  }
+  h1 { margin: 0; font-size: 18px; color: #f0c674; }
+  .day-info { font-size: 13px; color: #a0a0c0; }
+  .role-banner { padding: 5px 12px; border-radius: 6px; font-weight: bold; font-size: 13px; }
+  .role-banner.mastermind { background: #6b1a3a; color: #ffe0e8; }
+  .role-banner.player { background: #1a4a6b; color: #e0f0ff; }
+  .role-banner.resolve { background: #4a6b1a; color: #f0ffe0; }
+  .role-banner.event { background: #6b4a1a; color: #ffe8c0; }
+
+  /* 行事曆 */
+  .calendar {
+    display: flex;
+    gap: 6px;
+    padding: 6px 10px;
+    background: #232342;
+    border-radius: 8px;
+    border: 1px solid #3a3a5c;
+    flex-shrink: 0;
+  }
+  .cal-day {
+    flex: 1;
+    background: #1a1a2e;
+    border: 1px solid #3a3a5c;
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  .cal-day.current { border-color: #f0c674; background: #2a2a3a; }
+  .cal-day .day-num { color: #f0c674; font-weight: bold; font-size: 12px; }
+  .cal-day .ev-name { color: #ff8866; font-weight: bold; }
+  .cal-day .ev-target { color: #ffaaaa; font-size: 10px; }
+
+  .main-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 420px;
+    gap: 12px;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  /* 地圖 */
+  .map {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 6px;
+    background: #16162a;
+    padding: 6px;
+    border-radius: 10px;
+    border: 1px solid #3a3a5c;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .location {
+    background: #2a2a48;
+    border: 2px solid #3a3a5c;
+    border-radius: 8px;
+    padding: 7px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    transition: border-color 0.15s;
+    position: relative;
+  }
+  .location.selectable {
+    border-color: #f0c674;
+    box-shadow: 0 0 0 2px #f0c67455;
+    cursor: pointer;
+  }
+  .location.selectable::after {
+    content: "點此放置";
+    position: absolute;
+    bottom: 3px;
+    right: 7px;
+    font-size: 9px;
+    color: #f0c674;
+  }
+
+  .location.loc-1 { background-image: linear-gradient(rgba(42,42,72,0.52), rgba(42,42,72,0.74)), url("data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20400%20240%27%3E%0A%3Crect%20width%3D%27400%27%20height%3D%27240%27%20fill%3D%27%232f2438%27/%3E%0A%3Ccircle%20cx%3D%27330%27%20cy%3D%2760%27%20r%3D%2730%27%20fill%3D%27%23f3c77a%27%20fill-opacity%3D%270.9%27/%3E%0A%3Cpath%20d%3D%27M0%20165%20L80%20110%20L150%20165%20Z%27%20fill%3D%27%234f596a%27/%3E%3Cpath%20d%3D%27M95%20165%20L190%2095%20L280%20165%20Z%27%20fill%3D%27%23647084%27/%3E%3Cpath%20d%3D%27M215%20165%20L315%20105%20L400%20165%20Z%27%20fill%3D%27%23536073%27/%3E%0A%3Crect%20x%3D%27160%27%20y%3D%27108%27%20width%3D%2780%27%20height%3D%2712%27%20fill%3D%27%23d04a6a%27/%3E%3Crect%20x%3D%27170%27%20y%3D%27120%27%20width%3D%2710%27%20height%3D%2755%27%20fill%3D%27%23d04a6a%27/%3E%3Crect%20x%3D%27220%27%20y%3D%27120%27%20width%3D%2710%27%20height%3D%2755%27%20fill%3D%27%23d04a6a%27/%3E%3Crect%20x%3D%27130%27%20y%3D%27140%27%20width%3D%27140%27%20height%3D%278%27%20fill%3D%27%23d04a6a%27/%3E%0A%3Cpath%20d%3D%27M0%20170%20H400%20V240%20H0%20Z%27%20fill%3D%27%232a3b2d%27/%3E%3Cpath%20d%3D%27M0%20185%20H400%27%20stroke%3D%27%2365845f%27%20stroke-width%3D%274%27/%3E%0A%3C/svg%3E"); background-size: cover; background-position: center; background-repeat: no-repeat; }
+  .location.loc-2 { background-image: linear-gradient(rgba(42,42,72,0.50), rgba(42,42,72,0.72)), url("data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20400%20240%27%3E%0A%3Crect%20width%3D%27400%27%20height%3D%27240%27%20fill%3D%27%23203145%27/%3E%0A%3Crect%20x%3D%27110%27%20y%3D%2745%27%20width%3D%27180%27%20height%3D%27140%27%20rx%3D%2710%27%20fill%3D%27%23e7eef7%27/%3E%3Crect%20x%3D%27130%27%20y%3D%2765%27%20width%3D%27140%27%20height%3D%27100%27%20fill%3D%27%23b8d0e8%27/%3E%0A%3Crect%20x%3D%27185%27%20y%3D%2758%27%20width%3D%2730%27%20height%3D%2770%27%20fill%3D%27%23e25c5c%27/%3E%3Crect%20x%3D%27165%27%20y%3D%2778%27%20width%3D%2770%27%20height%3D%2730%27%20fill%3D%27%23e25c5c%27/%3E%0A%3Cg%20fill%3D%27%238eb0cf%27%3E%3Crect%20x%3D%27145%27%20y%3D%27145%27%20width%3D%2720%27%20height%3D%2715%27/%3E%3Crect%20x%3D%27175%27%20y%3D%27145%27%20width%3D%2720%27%20height%3D%2715%27/%3E%3Crect%20x%3D%27205%27%20y%3D%27145%27%20width%3D%2720%27%20height%3D%2715%27/%3E%3Crect%20x%3D%27235%27%20y%3D%27145%27%20width%3D%2720%27%20height%3D%2715%27/%3E%3C/g%3E%0A%3Crect%20x%3D%270%27%20y%3D%27185%27%20width%3D%27400%27%20height%3D%2755%27%20fill%3D%27%2330465e%27/%3E%3Cpath%20d%3D%27M0%20185%20H400%27%20stroke%3D%27%236f8ba4%27%20stroke-width%3D%274%27/%3E%0A%3C/svg%3E"); background-size: cover; background-position: center; background-repeat: no-repeat; }
+  .location.loc-3 { background-image: linear-gradient(rgba(42,42,72,0.52), rgba(42,42,72,0.78)), url("data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20400%20240%27%3E%0A%3Crect%20width%3D%27400%27%20height%3D%27240%27%20fill%3D%27%231f273b%27/%3E%3Crect%20x%3D%270%27%20y%3D%270%27%20width%3D%27400%27%20height%3D%27120%27%20fill%3D%27%23324061%27/%3E%0A%3Cg%20fill%3D%27%23707d97%27%3E%3Crect%20x%3D%2720%27%20y%3D%2795%27%20width%3D%2750%27%20height%3D%2790%27/%3E%3Crect%20x%3D%2775%27%20y%3D%2770%27%20width%3D%2755%27%20height%3D%27115%27/%3E%3Crect%20x%3D%27140%27%20y%3D%2750%27%20width%3D%2770%27%20height%3D%27135%27/%3E%3Crect%20x%3D%27220%27%20y%3D%2782%27%20width%3D%2760%27%20height%3D%27103%27/%3E%3Crect%20x%3D%27290%27%20y%3D%2740%27%20width%3D%2780%27%20height%3D%27145%27/%3E%3C/g%3E%0A%3Cg%20fill%3D%27%23f0c674%27%20fill-opacity%3D%270.4%27%3E%3Crect%20x%3D%2732%27%20y%3D%27110%27%20width%3D%278%27%20height%3D%278%27/%3E%3Crect%20x%3D%2745%27%20y%3D%27110%27%20width%3D%278%27%20height%3D%278%27/%3E%3Crect%20x%3D%2788%27%20y%3D%2785%27%20width%3D%278%27%20height%3D%278%27/%3E%3Crect%20x%3D%27101%27%20y%3D%2785%27%20width%3D%278%27%20height%3D%278%27/%3E%3Crect%20x%3D%27154%27%20y%3D%2767%27%20width%3D%279%27%20height%3D%279%27/%3E%3Crect%20x%3D%27169%27%20y%3D%2767%27%20width%3D%279%27%20height%3D%279%27/%3E%3Crect%20x%3D%27235%27%20y%3D%2798%27%20width%3D%278%27%20height%3D%278%27/%3E%3Crect%20x%3D%27248%27%20y%3D%2798%27%20width%3D%278%27%20height%3D%278%27/%3E%3Crect%20x%3D%27306%27%20y%3D%2755%27%20width%3D%279%27%20height%3D%279%27/%3E%3Crect%20x%3D%27321%27%20y%3D%2755%27%20width%3D%279%27%20height%3D%279%27/%3E%3C/g%3E%0A%3Crect%20x%3D%270%27%20y%3D%27185%27%20width%3D%27400%27%20height%3D%2755%27%20fill%3D%27%232b3246%27/%3E%3Cpath%20d%3D%27M0%20190%20C80%20175%20120%20205%20200%20190%20S320%20175%20400%20192%27%20stroke%3D%27%2392a0bd%27%20stroke-width%3D%273%27%20fill%3D%27none%27/%3E%0A%3C/svg%3E"); background-size: cover; background-position: center; background-repeat: no-repeat; }
+  .location.loc-4 { background-image: linear-gradient(rgba(42,42,72,0.48), rgba(42,42,72,0.72)), url("data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20400%20240%27%3E%0A%3Crect%20width%3D%27400%27%20height%3D%27240%27%20fill%3D%27%232e314e%27/%3E%3Crect%20x%3D%2775%27%20y%3D%2775%27%20width%3D%27250%27%20height%3D%27110%27%20rx%3D%278%27%20fill%3D%27%23d9d0b8%27/%3E%3Cpolygon%20points%3D%2760%2C85%20200%2C30%20340%2C85%27%20fill%3D%27%238b5f4a%27/%3E%0A%3Crect%20x%3D%27110%27%20y%3D%27105%27%20width%3D%2745%27%20height%3D%2735%27%20fill%3D%27%2388a0c8%27/%3E%3Crect%20x%3D%27172%27%20y%3D%27105%27%20width%3D%2755%27%20height%3D%2780%27%20fill%3D%27%236b4a3a%27/%3E%3Crect%20x%3D%27245%27%20y%3D%27105%27%20width%3D%2745%27%20height%3D%2735%27%20fill%3D%27%2388a0c8%27/%3E%0A%3Crect%20x%3D%2740%27%20y%3D%27155%27%20width%3D%2780%27%20height%3D%2745%27%20rx%3D%276%27%20fill%3D%27%232e4f3b%27/%3E%3Crect%20x%3D%2748%27%20y%3D%27163%27%20width%3D%2764%27%20height%3D%2729%27%20fill%3D%27%23406c52%27/%3E%3Cpath%20d%3D%27M130%20185%20H360%27%20stroke%3D%27%237f907a%27%20stroke-width%3D%274%27/%3E%0A%3C/svg%3E"); background-size: cover; background-position: center; background-repeat: no-repeat; }
+  .location-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid #3a3a5c;
+    flex-shrink: 0;
+  }
+  .location-name { font-weight: bold; color: #f0c674; font-size: 12px; }
+  .conspiracy {
+    background: #3a1a4a;
+    color: #d99cff;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-size: 10px;
+  }
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    margin-bottom: 3px;
+    min-height: 18px;
+  }
+  .chip {
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    cursor: pointer;
+    user-select: none;
+    transition: opacity 0.15s;
+  }
+  .chip.player { background: #1a4a6b; color: #e0f0ff; border: 1px solid #4a8ad0; }
+  .chip.mastermind { background: #6b1a3a; color: #ffe0e8; border: 1px solid #d04a6a; }
+  .chip.mastermind.hidden { color: #d04a6a; }
+  .chip.removable:hover { opacity: 0.6; text-decoration: line-through; }
+  .chip.cancelled { text-decoration: line-through; opacity: 0.5; }
+
+  .character-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+  .character {
+    background: #1a1a2e;
+    border: 1px solid #3a3a5c;
+    border-radius: 4px;
+    padding: 4px 6px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    flex-shrink: 0;
+  }
+  .character.selectable {
+    border-color: #f0c674;
+    box-shadow: 0 0 0 1px #f0c67455;
+  }
+  .character.over-anxiety { background: #4a1a1a; }
+  .character.dead {
+    background: #16161e;
+    color: #555;
+    cursor: not-allowed;
+    border-style: dashed;
+  }
+  .character.dead .char-name::before { content: "💀 "; }
+  .char-row { display: flex; justify-content: space-between; align-items: center; gap: 4px; }
+  .char-name { font-weight: bold; font-size: 11px; }
+  .char-role-badge {
+    font-size: 9px;
+    color: #f0c674;
+    background: #3a2a1a;
+    padding: 0 5px;
+    border-radius: 3px;
+    margin-left: 4px;
+  }
+  .char-stats { display: flex; gap: 5px; font-size: 9px; color: #a0a0c0; }
+  .stat-anxiety { color: #ff8888; }
+  .stat-friendly { color: #88ff88; }
+  .stat-cons { color: #d99cff; }
+  .char-chips { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 2px; }
+
+  /* 側欄 */
+  .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow: hidden;
+    min-height: 0;
+  }
+  .side-panel > .panel { flex: 0 0 auto; }
+  .side-panel > .panel.log-flex { flex: 1 1 0; min-height: 100px; }
+  .side-panel > .panel.resolve-flex { flex: 1 1 0; min-height: 200px; }
+  .panel {
+    background: #232342;
+    border: 1px solid #3a3a5c;
+    border-radius: 8px;
+    padding: 8px 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .panel h3 {
+    margin: 0 0 6px 0;
+    font-size: 12px;
+    color: #f0c674;
+    border-bottom: 1px solid #3a3a5c;
+    padding-bottom: 3px;
+    flex-shrink: 0;
+  }
+  .panel.secret { border-color: #d04a6a; background: #2a1a2a; }
+  .panel.secret.expanded { max-height: 28vh; }
+  .panel.secret.collapsed { max-height: none; }
+  .panel.secret h3 {
+    color: #ff8888;
+    border-bottom-color: #d04a6a;
+    cursor: pointer;
+    user-select: none;
+    margin-bottom: 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #d04a6a;
+  }
+  .panel.secret.collapsed h3 { border-bottom: none; padding-bottom: 0; }
+  .panel.secret h3 .toggle-arrow { float: right; font-size: 11px; }
+  .secret-body { overflow-y: auto; flex: 1; min-height: 0; padding-right: 4px; padding-top: 6px; }
+
+  .selection-prompt {
+    background: #1a4a6b;
+    color: #e0f0ff;
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .selection-prompt.warn { background: #4a3a1a; color: #ffe8a0; }
+
+  .card-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+  }
+  .card {
+    background: #2a2a48;
+    border: 1px solid #4a4a6c;
+    border-radius: 4px;
+    padding: 4px 5px;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+    text-align: center;
+  }
+  .card:hover:not(.disabled) { background: #3a3a58; border-color: #6a6aaa; }
+  .card.disabled { opacity: 0.3; cursor: not-allowed; }
+  .card.selected { background: #4a3a6a; border-color: #f0c674; box-shadow: 0 0 0 2px #f0c67455; }
+  .card.once { border-style: dashed; }
+  .card-name { font-weight: bold; }
+  .card-meta { font-size: 8px; color: #888; }
+
+  .plays-list { display: flex; flex-direction: column; gap: 3px; flex-shrink: 0; }
+  .play-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #1a1a2e;
+    padding: 4px 7px;
+    border-radius: 4px;
+    border: 1px solid #3a3a5c;
+    font-size: 11px;
+  }
+  .play-row.empty { color: #666; font-style: italic; justify-content: center; }
+  .play-remove {
+    background: #6b1a3a;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 1px 6px;
+    cursor: pointer;
+    font-size: 9px;
+  }
+
+  button.primary {
+    background: #4a8ad0;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 7px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 5px;
+  }
+  button.primary:hover:not(:disabled) { background: #5a9ae0; }
+  button.primary:disabled { background: #3a3a5c; cursor: not-allowed; opacity: 0.5; }
+  button.secondary {
+    background: #3a3a5c;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 3px 9px;
+    font-size: 10px;
+    cursor: pointer;
+  }
+  button.danger { background: #6b1a3a; color: white; border: none; border-radius: 4px; padding: 4px 10px; font-size: 11px; cursor: pointer; }
+  button.danger:hover { background: #8b2a4a; }
+
+  .log-panel { overflow-y: auto; }
+  .log-entry {
+    background: #1a1a2e;
+    border-left: 3px solid #4a8ad0;
+    padding: 4px 6px;
+    margin-bottom: 3px;
+    font-size: 10px;
+    border-radius: 3px;
+  }
+  .log-entry.event { border-left-color: #f0c674; }
+  .log-day-header {
+    color: #f0c674;
+    font-weight: bold;
+    margin-top: 4px;
+    margin-bottom: 2px;
+    font-size: 11px;
+  }
+  .log-day-header:first-child { margin-top: 0; }
+
+  /* Modal & Setup */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 10, 20, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .modal {
+    background: #232342;
+    border: 1px solid #3a3a5c;
+    border-radius: 12px;
+    padding: 20px 24px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal h2 { font-size: 20px; color: #f0c674; margin: 0 0 10px 0; }
+  .modal p { color: #a0a0c0; margin: 0 0 12px 0; font-size: 13px; }
+  .modal textarea {
+    width: 100%;
+    min-height: 200px;
+    background: #1a1a2e;
+    color: #e8e8f0;
+    border: 1px solid #3a3a5c;
+    border-radius: 6px;
+    padding: 8px;
+    font-family: monospace;
+    font-size: 12px;
+    resize: vertical;
+  }
+  .modal .confirm-list {
+    background: #1a1a2e;
+    border: 1px solid #3a3a5c;
+    border-radius: 6px;
+    padding: 8px;
+    margin-bottom: 12px;
+  }
+  .modal .confirm-row {
+    padding: 3px 0;
+    font-size: 12px;
+    border-bottom: 1px dashed #3a3a5c;
+  }
+  .modal .confirm-row:last-child { border-bottom: none; }
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 12px;
+  }
+  .modal button {
+    border: none;
+    border-radius: 5px;
+    padding: 8px 16px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .modal button.confirm { background: #4a8ad0; color: white; }
+  .modal button.cancel { background: #3a3a5c; color: white; }
+  .modal button.danger { background: #6b1a3a; color: white; }
+
+  .overlay-content {
+    text-align: center;
+    padding: 24px;
+    background: #232342;
+    border-radius: 12px;
+    border: 1px solid #3a3a5c;
+  }
+  .overlay-content h2 { font-size: 24px; color: #f0c674; margin-bottom: 10px; }
+  .overlay-content p { color: #a0a0c0; margin-bottom: 16px; font-size: 14px; }
+
+  .resolve-detail {
+    background: #1a1a2e;
+    border-radius: 5px;
+    padding: 6px 8px;
+    margin-bottom: 5px;
+    font-size: 11px;
+  }
+  .resolve-detail .target-name { color: #f0c674; font-weight: bold; font-size: 12px; }
+  .resolve-detail .effects { font-size: 10px; color: #a0a0c0; margin-top: 3px; line-height: 1.4; }
+  .resolve-area { overflow-y: auto; flex: 1; min-height: 0; }
+
+  /* Event */
+  .event-banner {
+    background: #4a3a1a;
+    border: 2px solid #f0c674;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 8px;
+  }
+  .event-banner .ev-title { font-size: 14px; font-weight: bold; color: #f0c674; }
+  .event-banner .ev-desc { font-size: 11px; color: #ffe8a0; margin-top: 4px; }
+  .event-status.triggered { color: #ff6666; font-weight: bold; }
+  .event-status.not-triggered { color: #88ff88; }
+
+  /* Secret panel */
+  .role-row {
+    display: flex;
+    justify-content: space-between;
+    background: #1a1a2e;
+    padding: 4px 8px;
+    margin-bottom: 3px;
+    border-radius: 4px;
+    font-size: 11px;
+  }
+  .role-row .name { font-weight: bold; }
+  .role-row .role-name { color: #ff8888; }
+  .role-row .culprit-mark { color: #ffaaaa; font-size: 10px; margin-left: 4px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// =========================================
+// 線上對戰 Net 模組
+// =========================================
+const Net = {
+  enabled: false,
+  ws: null,
+  role: null,    // 'mastermind' | 'player'
+  code: null,
+  paired: false,
+  suppressBroadcast: false,
+  status: 'idle', // idle | connecting | waiting | paired | err
+
+  connect(roleAction, code) {
+    return new Promise((resolve, reject) => {
+      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const url = `${proto}//${location.host}`;
+      try { this.ws = new WebSocket(url); } catch (e) { return reject(e); }
+      this.ws.onopen = () => {
+        if (roleAction === 'create') this.ws.send(JSON.stringify({ type: 'create' }));
+        else this.ws.send(JSON.stringify({ type: 'join', code }));
+        resolve();
+      };
+      this.ws.onerror = () => { this.status = 'err'; reject(new Error('連線失敗')); };
+      this.ws.onmessage = (ev) => {
+        let d; try { d = JSON.parse(ev.data); } catch { return; }
+        Net.onMessage(d);
+      };
+      this.ws.onclose = () => {
+        this.enabled = false; this.paired = false;
+        if (state) render();
+      };
+    });
+  },
+
+  send(payload) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'msg', payload }));
+    }
+  },
+
+  onMessage(data) {
+    if (data.type === 'lobby') {
+      this.enabled = true;
+      this.role = data.role;
+      this.code = data.code;
+      this.paired = data.state === 'paired';
+      this.status = data.state;
+      render();
+    } else if (data.type === 'error') {
+      alert('錯誤：' + data.msg);
+      this.status = 'err';
+      render();
+    } else if (data.type === 'opponentDisconnected') {
+      alert('對手已離開');
+      this.enabled = false;
+      this.paired = false;
+      location.reload();
+    } else if (data.type === 'msg') {
+      Net.handleAction(data.payload);
+    }
+  },
+
+  handleAction(payload) {
+    Net.suppressBroadcast = true;
+    try {
+      const a = payload.action;
+      if (a === 'startGameRemote') { actuallyStartGame(payload.script); return; }
+      if (a === 'mTargets') {
+        // 玩家端：劇作家送出後，公開目標但不公開內容
+        state.mPlays = payload.targets.map(t => ({ target: t, cardId: '_hidden' }));
+        state.phase = 'player';
+        state.netWaitingFor = null;
+        render();
+        return;
+      }
+      if (a === 'pSubmit') {
+        // 劇作家端：玩家送出全部出牌
+        state.pPlays = payload.plays || [];
+        resolveCards();
+        state.phase = 'resolve';
+        state.netWaitingFor = null;
+        render();
+        return;
+      }
+      if (a === 'mFullReveal') {
+        // 玩家端：在玩家送出後，劇作家全部出牌被公開
+        state.mPlays = payload.plays || [];
+        resolveCards();
+        state.phase = 'resolve';
+        state.netWaitingFor = null;
+        render();
+        return;
+      }
+      // 一般動作：呼叫對應全域函式（會略過廣播因 suppressBroadcast=true）
+      const fn = window[a];
+      if (typeof fn === 'function') fn(...(payload.args || []));
+    } finally {
+      Net.suppressBroadcast = false;
+    }
+  },
+
+  // 角色屬於哪個階段（決定誰能操作）
+  expectedRole(phase) {
+    if (phase === 'mastermind' || phase === 'masterPickInit' || phase === 'masterAbility') return 'mastermind';
+    if (phase === 'player' || phase === 'exFriendly') return 'player';
+    if (phase === 'friendly') {
+      // 無視友好 劇作家決定 → 換劇作家操作
+      if (state && state.pendingChoice && state.pendingChoice.type === 'masterRejectDecision') return 'mastermind';
+      return 'player';
+    }
+    if (phase === 'event') {
+      if (state && state.pendingChoice) {
+        if (state.pendingChoice.type === 'mastermindKill' || state.pendingChoice.type === 'mastermindUnease' || state.pendingChoice.type === 'missingDest') return 'mastermind';
+        if (state.pendingChoice.type === 'playerKill') return 'player';
+      }
+      // 事件結算後的「進入下一天 / 結束本輪」只能由劇作家推進，避免雙端各自 +1 天。
+      return 'mastermind';
+    }
+    // 這些階段會推進 loop/day/phase，線上模式下也固定由劇作家按一次再同步。
+    if (phase === 'resolve' || phase === 'loopEnd') return 'mastermind';
+    return null; // shared (gameover / guess / switch)
+  },
+
+  isMyTurn() {
+    if (!this.enabled) return true;
+    const r = this.expectedRole(state ? state.phase : null);
+    if (!r) return true; // shared phase
+    return r === this.role;
+  },
+
+  wrap(name) {
+    const orig = window[name];
+    if (typeof orig !== 'function') return;
+    window[name] = function(...args) {
+      if (Net.enabled && !Net.suppressBroadcast) {
+        // 舊畫面殘留或雙擊時，不是自己的階段就直接忽略。
+        if (!Net.isMyTurn()) { render(); return; }
+        Net.send({ action: name, args });
+        // 執行本地動作期間暫停廣播，避免 endFriendlyPhase→startEventPhase→finishDay
+        // 這類內部呼叫又被包裝函式再次送出，造成另一端多推進一天。
+        Net.suppressBroadcast = true;
+        try { return orig.apply(this, args); }
+        finally { Net.suppressBroadcast = false; }
+      }
+      return orig.apply(this, args);
+    };
+  },
+};
+
+// =========================================
+// 資料
+// =========================================
+const LOCATIONS = [
+  { id: 1, name: '神社' },
+  { id: 2, name: '醫院' },
+  { id: 3, name: '都會' },
+  { id: 4, name: '學校' },
+];
+
+// 角色定義（基礎屬性）
+const CHAR_DEFS = {
+  '巫女':       { anxietyLimit: 2, initPos: 1, forbidden: [3],     traits: ['學生','少女'] },
+  '女學生':     { anxietyLimit: 3, initPos: 4, forbidden: [],      traits: ['學生','少女'] },
+  '男學生':     { anxietyLimit: 2, initPos: 4, forbidden: [],      traits: ['學生','少年'] },
+  '職員':       { anxietyLimit: 2, initPos: 3, forbidden: [4],     traits: ['成人','男性'] },
+  '住院患者':   { anxietyLimit: 2, initPos: 2, forbidden: [1,3,4], traits: ['少年'] },
+  '異界人':     { anxietyLimit: 2, initPos: 1, forbidden: [2],     traits: ['少女'] },
+  '大小姐':     { anxietyLimit: 1, initPos: 4, forbidden: [],      traits: ['少女','學生'] },
+  '班長':       { anxietyLimit: 2, initPos: 4, forbidden: [],      traits: ['少女','學生'] },
+  '偶像':       { anxietyLimit: 2, initPos: 3, forbidden: [],      traits: ['少女','學生'] },
+  '轉校生':     { anxietyLimit: 2, initPos: 4, forbidden: [],      traits: ['少女','學生'] },
+  '手下':       { anxietyLimit: 1, initPos: 1, forbidden: [],      traits: ['男性','成人'], dynamicInit: true },
+  '神靈':       { anxietyLimit: 3, initPos: 1, forbidden: [],      traits: ['男性','女性'] },
+  '教師':       { anxietyLimit: 2, initPos: 4, forbidden: [],      traits: ['女性','成人'] },
+  '鑑別員':     { anxietyLimit: 3, initPos: 3, forbidden: [],      traits: ['男性','成人'] },
+  '媒體人':     { anxietyLimit: 2, initPos: 3, forbidden: [],      traits: ['男性','成人'] },
+  '刑警':       { anxietyLimit: 3, initPos: 3, forbidden: [],      traits: ['男性','成人'] },
+  '護士':       { anxietyLimit: 3, initPos: 2, forbidden: [],      traits: ['女性','成人'] },
+  '黑貓':       { anxietyLimit: 0, initPos: 1, forbidden: [],      traits: ['動物'], passive: 'blackcat' },
+  '醫生':       { anxietyLimit: 2, initPos: 2, forbidden: [],      traits: ['男性','成人'] },
+  '軍人':       { anxietyLimit: 3, initPos: 2, forbidden: [],      traits: ['男性','成人'] },
+  '情報商':     { anxietyLimit: 3, initPos: 3, forbidden: [],      traits: ['女性','成人'] },
+};
+
+// 身分定義
+const ROLE_DEFS = {
+  '平民':     { desc: '無能力' },
+  '關鍵人物': { desc: '(強制) 死亡時 玩家立刻輸該輪', flag: 'CRITICAL' },
+  '永生者':   { desc: '不死', traits: ['不死'] },
+  '魔女':     { desc: '絕對無視友好（玩家發動友好效果無效）', traits: ['絕對無視友好'] },
+  '殺人狂':   { desc: '(強制) 僅與一名角色同地時嘗試殺死對方', flag: 'KILLER' },
+  '時間旅者': { desc: '不死；劇作家不能對其用禁止友好；輪結束時友好<3 玩家輸該輪', traits: ['不死'], flag: 'TIME_TRAVELER' },
+  '傳謠人':   { desc: '(任意) 每天放牌後可在同區一角色加1不安', flag: 'RUMOR' },
+  '祭品':     { desc: '不死；當事人事件中密謀視為不安處理；劇本必須將其指定為某事件當事人；身上密謀≥2且不安≥2 時 劇作家可發動毀滅(任意能力,待實作)', traits: ['不死'], flag: 'SACRIFICE' },
+  '邪教徒':   { desc: '絕對無視友好；劇作家可使同區一張禁止密謀失效(任意能力,待實作)', traits: ['絕對無視友好'], flag: 'CULTIST' },
+  '深潛者':   { desc: '無視友好；死亡時公開身分並 ex+1；劇作家可往同區角色或所在地 +1 密謀(任意能力,待實作)', traits: ['無視友好'], flag: 'DIVER' },
+  '偏執狂':   { desc: '絕對無視友好；劇作家可往該角色身上 +1 不安或密謀(任意能力,待實作)', traits: ['絕對無視友好'], flag: 'PARANOID' },
+  '巫師':     { desc: '輪結束時若死亡則玩家輸；發動友好能力後公開身分並 ex+1', flag: 'WIZARD' },
+  '目擊者':   { desc: '回合結束時若不安≥4 則死亡並 ex+1', flag: 'WITNESS' },
+  '無面者':   { desc: '無視友好+不死；ex≤1 時擁有傳謠人能力，ex≥2 時擁有深潛者能力(身分不公開,待實作)', traits: ['無視友好','不死'], flag: 'FACELESS' },
+};
+
+// 角色友好能力
+// freq: 'day' = 每日重置, 'loop' = 一輪一次
+// 若 needsTarget 設了字串，apply 會收到目標角色
+const CHAR_ABILITIES = {
+  '巫女': [
+    { id: 'miko_3', threshold: 3, desc: '若位於神社，消除神社 1 密謀', freq: 'day',
+      check: (s, c) => c.position === 1 && s.locations.find(l=>l.id===1).conspiracy > 0,
+      apply: (s, c, _t, log) => {
+        const sh = s.locations.find(l=>l.id===1);
+        sh.conspiracy = Math.max(0, sh.conspiracy - 1);
+        log.push(`神社密謀 -1`);
+      },
+    },
+    { id: 'miko_5', threshold: 5, desc: '(一輪一次) 得知一名同區角色的身分', freq: 'loop',
+      needsTarget: 'sameAreaChar',
+      check: (s, c) => s.characters.some(x => x.position===c.position && x.id!==c.id && !x.dead),
+      apply: (s, c, t, log) => {
+        s.revealedRoles = s.revealedRoles || {};
+        s.revealedRoles[t.id] = t.role;
+        log.push(`${c.name} 得知 ${t.name} 的身分為 ${t.role}`);
+      },
+    },
+  ],
+  '女學生': [
+    { id: 'fstu_2', threshold: 2, desc: '同區一名學生不安≥1 → 消其 1 不安', freq: 'day',
+      needsTarget: 'sameAreaStudentAnxiety',
+      check: (s, c) => s.characters.some(x => x.position===c.position && x.id!==c.id && !x.dead && hasTrait(x,'學生') && x.anxiety>=1),
+      apply: (s, c, t, log) => { t.anxiety = Math.max(0, t.anxiety - 1); log.push(`${t.name} 不安 -1`); },
+    },
+  ],
+  '男學生': [
+    { id: 'mstu_2', threshold: 2, desc: '同區一名學生不安≥1 → 消其 1 不安', freq: 'day',
+      needsTarget: 'sameAreaStudentAnxiety',
+      check: (s, c) => s.characters.some(x => x.position===c.position && x.id!==c.id && !x.dead && hasTrait(x,'學生') && x.anxiety>=1),
+      apply: (s, c, t, log) => { t.anxiety = Math.max(0, t.anxiety - 1); log.push(`${t.name} 不安 -1`); },
+    },
+  ],
+  '職員': [
+    { id: 'staff_3', threshold: 3, desc: '(一輪一次) 公開其身分', freq: 'loop',
+      check: () => true,
+      apply: (s, c, _t, log) => {
+        s.revealedRoles = s.revealedRoles || {};
+        s.revealedRoles[c.id] = c.role;
+        log.push(`${c.name} 的身分為 ${c.role}`);
+      },
+    },
+  ],
+  '住院患者': [],
+  '異界人': [
+    { id: 'alien_4', threshold: 4, desc: '(一輪一次) 使同區一名角色死亡', freq: 'loop',
+      needsTarget: 'sameAreaChar',
+      check: (s, c) => s.characters.some(x => x.position===c.position && x.id!==c.id && !x.dead),
+      apply: (s, c, t, log) => { killCharacter(t, log); },
+    },
+    { id: 'alien_5', threshold: 5, desc: '(一輪一次) 使同區一名死亡角色復活（不安/密謀/友好保留）', freq: 'loop',
+      needsTarget: 'sameAreaDeadChar',
+      check: (s, c) => s.characters.some(x => x.position===c.position && x.dead),
+      apply: (s, c, t, log) => { t.dead = false; log.push(`${t.name} 復活`); },
+    },
+  ],
+  '大小姐': [
+    { id: 'lady_3', threshold: 3, desc: '若位於都會或學校，往同區另一角色 +1 友好', freq: 'day',
+      needsTarget: 'sameAreaChar',
+      check: (s, c) => (c.position === 3 || c.position === 4) && s.characters.some(x => x.position===c.position && x.id!==c.id && !x.dead),
+      apply: (s, c, t, log) => { t.friendly += 1; log.push(`${t.name} 友好 +1`); },
+    },
+  ],
+  '班長': [
+    { id: 'class_2', threshold: 2, desc: '(一輪一次) 將一張已用的一次性玩家牌歸還手牌', freq: 'loop',
+      needsTarget: 'usedOncePlayerCard',
+      check: (s) => Object.values(s.pUsedOnceCount || {}).some(v => v >= 1),
+      apply: (s, c, t, log) => {
+        s.pUsedOnceCount[t.cardId] = Math.max(0, (s.pUsedOnceCount[t.cardId] || 0) - 1);
+        const card = PLAYER_CARDS.find(cc => cc.id === t.cardId);
+        log.push(`一次性牌「${card.name}」已歸還玩家手牌`);
+      },
+    },
+  ],
+  '偶像': [
+    { id: 'idol_3', threshold: 3, desc: '同區另一角色 -1 不安', freq: 'day',
+      needsTarget: 'sameAreaCharWithAnxiety',
+      check: (s, c) => s.characters.some(x => x.position===c.position && x.id!==c.id && !x.dead && x.anxiety>=1),
+      apply: (s, c, t, log) => { t.anxiety = Math.max(0, t.anxiety - 1); log.push(`${t.name} 不安 -1`); },
+    },
+    { id: 'idol_4', threshold: 4, desc: '同區另一角色 +1 友好', freq: 'day',
+      needsTarget: 'sameAreaChar',
+      check: (s, c) => s.characters.some(x => x.position===c.position && x.id!==c.id && !x.dead),
+      apply: (s, c, t, log) => { t.friendly += 1; log.push(`${t.name} 友好 +1`); },
+    },
+  ],
+  '轉校生': [
+    { id: 'trans_2', threshold: 2, desc: '同區另一角色身上一枚角色密謀換成一枚友好', freq: 'day',
+      needsTarget: 'sameAreaCharWithConspiracy',
+      check: (s, c) => s.characters.some(x => x.position===c.position && x.id!==c.id && !x.dead && x.conspiracy>=1),
+      apply: (s, c, t, log) => { t.conspiracy = Math.max(0, t.conspiracy - 1); t.friendly += 1; log.push(`${t.name} 角色密謀 -1，友好 +1`); },
+    },
+  ],
+  '手下': [
+    { id: 'thug_3', threshold: 3, desc: '(一輪一次) 本輪以此角色為當事人的事件不會觸發', freq: 'loop',
+      check: () => true,
+      apply: (s, c, _t, log) => {
+        s.eventBlockedTargets = s.eventBlockedTargets || new Set();
+        s.eventBlockedTargets.add(c.name);
+        log.push(`本輪以 ${c.name} 為當事人的事件將不會觸發`);
+      },
+    },
+  ],
+  '神靈': [
+    { id: 'god_3', threshold: 3, desc: '(一輪一次) 公開一個事件的當事人', freq: 'loop',
+      needsTarget: 'event',
+      check: (s, c) => s.script.events.some(e => !(s.revealedEventTargets && s.revealedEventTargets[e.day])),
+      apply: (s, c, t, log) => {
+        s.revealedEventTargets = s.revealedEventTargets || {};
+        const ev = s.script.events.find(e => e.day === t.day);
+        s.revealedEventTargets[ev.day] = ev.target;
+        log.push(`第 ${ev.day} 天 ${ev.event} 當事人為 ${ev.target}`);
+      },
+    },
+    { id: 'god_5', threshold: 5, desc: '同區一名角色 -1 角色密謀，或所在地點 -1 地點密謀', freq: 'day',
+      needsTarget: 'sameAreaCharOrLocConspiracy',
+      check: (s, c) => {
+        const cs = s.characters.some(x => x.position===c.position && x.id!==c.id && !x.dead && x.conspiracy>=1);
+        const lc = s.locations.find(l => l.id === c.position).conspiracy >= 1;
+        return cs || lc;
+      },
+      apply: (s, c, t, log) => {
+        if (t.kind === 'loc') {
+          const loc = s.locations.find(l => l.id === t.id);
+          loc.conspiracy = Math.max(0, loc.conspiracy - 1);
+          log.push(`${loc.name} 密謀 -1`);
+        } else {
+          t.conspiracy = Math.max(0, t.conspiracy - 1);
+          log.push(`${t.name} 角色密謀 -1`);
+        }
+      },
+    },
+  ],
+  '教師': [
+    { id: 'teacher_3a', group: 'teacher_3', threshold: 3, desc: '同區另一名學生 +1 不安（與 -1 不安 二擇一）', freq: 'day',
+      needsTarget: 'sameAreaStudentNotSelf',
+      check: (s, c) => s.characters.some(x => x.position===c.position && x.id!==c.id && !x.dead && hasTrait(x,'學生')),
+      apply: (s, c, t, log) => { t.anxiety += 1; log.push(`${t.name} 不安 +1`); },
+    },
+    { id: 'teacher_3b', group: 'teacher_3', threshold: 3, desc: '同區另一名學生 -1 不安（與 +1 不安 二擇一）', freq: 'day',
+      needsTarget: 'sameAreaStudentNotSelfWithAnxiety',
+      check: (s, c) => s.characters.some(x => x.position===c.position && x.id!==c.id && !x.dead && hasTrait(x,'學生') && x.anxiety>=1),
+      apply: (s, c, t, log) => { t.anxiety = Math.max(0, t.anxiety - 1); log.push(`${t.name} 不安 -1`); },
+    },
+    { id: 'teacher_4', threshold: 4, desc: '(一輪一次) 公開同區另一名學生的身分', freq: 'loop',
+      needsTarget: 'sameAreaStudentNotSelf',
+      check: (s, c) => s.characters.some(x => x.position===c.position && x.id!==c.id && !x.dead && hasTrait(x,'學生')),
+      apply: (s, c, t, log) => {
+        s.revealedRoles = s.revealedRoles || {};
+        s.revealedRoles[t.id] = t.role;
+        log.push(`${t.name} 的身分為 ${t.role}`);
+      },
+    },
+  ],
+  '鑑別員': [
+    { id: 'forensic_2', threshold: 2, desc: '(一輪一次) 將一枚指示物在同區另兩名角色間移動', freq: 'loop',
+      customFlow: 'forensicMove',
+      check: (s, c) => {
+        const cands = s.characters.filter(x => x.position === c.position && x.id !== c.id && !x.dead);
+        if (cands.length < 2) return false;
+        return cands.some(x => (x.anxiety>=1 || x.conspiracy>=1 || x.friendly>=1));
+      },
+      // apply 由 forensicMove 流程處理
+      apply: () => {},
+    },
+    { id: 'forensic_5', threshold: 5, desc: '(一輪一次) 公開任一屍體的身分', freq: 'loop',
+      needsTarget: 'anyDeadChar',
+      check: (s) => s.characters.some(x => x.dead),
+      apply: (s, c, t, log) => {
+        s.revealedRoles = s.revealedRoles || {};
+        s.revealedRoles[t.id] = t.role;
+        log.push(`${t.name} 的身分為 ${t.role}`);
+      },
+    },
+  ],
+  '媒體人': [
+    { id: 'media_2a', threshold: 2, desc: '任一其他角色 +1 不安', freq: 'day',
+      needsTarget: 'anyOtherChar',
+      check: (s, c) => s.characters.some(x => x.id!==c.id && !x.dead),
+      apply: (s, c, t, log) => { t.anxiety += 1; log.push(`${t.name} 不安 +1`); },
+    },
+    { id: 'media_2b', threshold: 2, desc: '同區另一角色 +1 角色密謀，或所在地 +1 地點密謀（同區無其他角色時不可用）', freq: 'day',
+      needsTarget: 'sameAreaCharOrLocPlaceNotSelf',
+      check: (s, c) => s.characters.some(x => x.position===c.position && x.id!==c.id && !x.dead),
+      apply: (s, c, t, log) => {
+        if (t.kind === 'loc') {
+          const loc = s.locations.find(l => l.id === t.id);
+          loc.conspiracy += 1;
+          log.push(`${loc.name} 密謀 +1`);
+        } else {
+          t.conspiracy += 1;
+          log.push(`${t.name} 角色密謀 +1`);
+        }
+      },
+    },
+  ],
+  '刑警': [
+    { id: 'cop_4', threshold: 4, desc: '(一輪一次) 公開本輪一個已觸發事件的當事人', freq: 'loop',
+      needsTarget: 'triggeredEvent',
+      check: (s) => s.log.some(e => e.kind === 'event' && e.triggered && e.loop === s.loop && !(s.revealedEventTargets && s.revealedEventTargets[e.day])),
+      apply: (s, c, t, log) => {
+        s.revealedEventTargets = s.revealedEventTargets || {};
+        const ev = s.script.events.find(e => e.day === t.day);
+        s.revealedEventTargets[ev.day] = ev.target;
+        log.push(`第 ${ev.day} 天 ${ev.event} 當事人為 ${ev.target}`);
+      },
+    },
+    { id: 'cop_5', threshold: 5, desc: '(一輪一次) 往同區另一名角色展開護衛（被殺時消耗護衛代替死亡，優先於不死）', freq: 'loop',
+      needsTarget: 'sameAreaChar',
+      check: (s, c) => s.characters.some(x => x.position===c.position && x.id!==c.id && !x.dead),
+      apply: (s, c, t, log) => {
+        s.guardedChars = s.guardedChars || new Set();
+        s.guardedChars.add(t.id);
+        log.push(`${t.name} 獲得護衛指示物`);
+      },
+    },
+  ],
+  '護士': [
+    { id: 'nurse_2', threshold: 2, desc: '同區一名不安已達上限的角色 -1 不安', freq: 'day',
+      needsTarget: 'sameAreaCharOverAnxiety',
+      bypassReject: true, // 即使有「無視友好」也不能被拒絕（絕對無視友好仍會擋下）
+      check: (s, c) => s.characters.some(x => x.position===c.position && x.id!==c.id && !x.dead && x.anxiety>=x.anxietyLimit),
+      apply: (s, c, t, log) => { t.anxiety = Math.max(0, t.anxiety - 1); log.push(`${t.name} 不安 -1`); },
+    },
+  ],
+  '黑貓': [
+    // 全部為被動強制能力，不在友好階段中發動
+  ],
+  '醫生': [
+    { id: 'doctor_2a', group: 'doctor_2', threshold: 2, desc: '同區另一角色 +1 不安（與 -1 不安 二擇一）', freq: 'day',
+      needsTarget: 'sameAreaCharNotSelf',
+      check: (s, c) => s.characters.some(x => x.position===c.position && x.id!==c.id && !x.dead),
+      apply: (s, c, t, log) => { t.anxiety += 1; log.push(`${t.name} 不安 +1`); },
+    },
+    { id: 'doctor_2b', group: 'doctor_2', threshold: 2, desc: '同區另一角色 -1 不安（與 +1 不安 二擇一；同區無人有不安時不可用）', freq: 'day',
+      needsTarget: 'sameAreaCharNotSelfWithAnxiety',
+      check: (s, c) => s.characters.some(x => x.position===c.position && x.id!==c.id && !x.dead && x.anxiety>=1),
+      apply: (s, c, t, log) => { t.anxiety = Math.max(0, t.anxiety - 1); log.push(`${t.name} 不安 -1`); },
+    },
+    // 註：「劇作家也可使用此能力（需醫生有無視友好+目標友好≥2）」之機制待後續實作
+    { id: 'doctor_3', threshold: 3, desc: '本輪取消住院患者的所有移動限制', freq: 'loop',
+      check: (s) => s.characters.some(x => x.name === '住院患者' && !x.dead),
+      apply: (s, c, _t, log) => {
+        s.movementUnlocked = s.movementUnlocked || new Set();
+        s.movementUnlocked.add('住院患者');
+        log.push(`本輪 住院患者 的移動限制已取消`);
+      },
+    },
+  ],
+  '情報商': [
+    { id: 'info_5', threshold: 5, desc: '(一輪一次) 玩家聲明一條 X 規則，劇作家公開另一條（玩家未指定的）X 規則', freq: 'loop',
+      customFlow: 'informantReveal',
+      check: (s) => {
+        if (!s.script) return false;
+        const r = s.revealedXRules || {};
+        return (s.script.X1 && !r.X1) || (s.script.X2 && !r.X2);
+      },
+      apply: () => {},
+    },
+  ],
+  '軍人': [
+    { id: 'soldier_2', threshold: 2, desc: '(一輪一次) 同區另一角色 +2 不安', freq: 'loop',
+      needsTarget: 'sameAreaChar',
+      check: (s, c) => s.characters.some(x => x.position===c.position && x.id!==c.id && !x.dead),
+      apply: (s, c, t, log) => { t.anxiety += 2; log.push(`${t.name} 不安 +2`); },
+    },
+    { id: 'soldier_5', threshold: 5, desc: '(一輪一次) 本輪「玩家死亡」敘述不會導致玩家輸', freq: 'loop',
+      check: () => true,
+      apply: (s, c, _t, log) => {
+        s.armyDeathImmunity = true;
+        log.push(`本輪「玩家死亡」敘述不會導致玩家輸`);
+      },
+    },
+  ],
+};
+
+// 劇作家任意能力（依身分啟用；放在每日結算後、友好階段前）
+const MASTER_ABILITIES = {
+  '傳謠人': [
+    { id: 'rumor', desc: '同區一名角色 +1 不安（可含自己）', freq: 'day',
+      check: (s, c) => !c.dead,
+      needsTarget: 'sameAreaCharIncSelf',
+      apply: (s, c, t, log) => { t.anxiety += 1; log.push(`${t.name} 不安 +1`); },
+    },
+  ],
+  '深潛者': [
+    { id: 'diver', desc: '同區一名角色 或 所在地 +1 密謀', freq: 'day',
+      check: () => true,
+      needsTarget: 'sameAreaCharOrLocPlace',
+      apply: (s, c, t, log) => {
+        if (t.kind === 'loc') {
+          const loc = s.locations.find(l => l.id === t.id);
+          loc.conspiracy += 1;
+          log.push(`${loc.name} 密謀 +1`);
+        } else {
+          t.conspiracy += 1;
+          log.push(`${t.name} 角色密謀 +1`);
+        }
+      },
+    },
+  ],
+  '偏執狂': [
+    { id: 'paranoid_anx', group: 'paranoid', desc: '該角色身上 +1 不安（與 +1 密謀 二擇一）', freq: 'day',
+      check: () => true,
+      apply: (s, c, _t, log) => { c.anxiety += 1; log.push(`${c.name} 不安 +1`); },
+    },
+    { id: 'paranoid_cons', group: 'paranoid', desc: '該角色身上 +1 角色密謀（與 +1 不安 二擇一）', freq: 'day',
+      check: () => true,
+      apply: (s, c, _t, log) => { c.conspiracy += 1; log.push(`${c.name} 角色密謀 +1`); },
+    },
+  ],
+  '祭品': [
+    { id: 'sacrifice_doom', desc: '若身上密謀≥2且不安≥2，所有角色死亡並使玩家死亡', freq: 'loop',
+      check: (s, c) => c.conspiracy >= 2 && c.anxiety >= 2,
+      apply: (s, c, _t, log) => {
+        s.characters.forEach(x => killCharacter(x, log));
+        loseLoop('祭品 啟動毀滅，玩家死亡', 'death');
+        log.push('祭品 啟動毀滅');
+      },
+    },
+  ],
+};
+
+// 醫生 共用版：醫生若有「無視友好」(非絕對) 且醫生本身友好≥2 → 劇作家也可對同區另一角色發動醫生友好2
+// 注意：目標角色不需要友好≥2。
+const DOCTOR_SHARED = [
+  { id: 'doctor_share_2a', group: 'doctor_2', desc: '(共用) 醫生友好≥2：同區另一角色 +1 不安', freq: 'day',
+    needsTarget: 'sameAreaCharNotSelf',
+    check: (s, c) => c.friendly >= 2 && s.characters.some(x => x.position===c.position && x.id!==c.id && !x.dead && !x.offBoard),
+    apply: (s, c, t, log) => { t.anxiety += 1; log.push(`${t.name} 不安 +1`); },
+  },
+  { id: 'doctor_share_2b', group: 'doctor_2', desc: '(共用) 醫生友好≥2：同區另一角色 -1 不安（目標不安≥1）', freq: 'day',
+    needsTarget: 'sameAreaCharNotSelfWithAnxiety',
+    check: (s, c) => c.friendly >= 2 && s.characters.some(x => x.position===c.position && x.id!==c.id && !x.dead && !x.offBoard && x.anxiety>=1),
+    apply: (s, c, t, log) => { t.anxiety = Math.max(0, t.anxiety - 1); log.push(`${t.name} 不安 -1`); },
+  },
+];
+
+function getMasterAbilitiesFor(c) {
+  let abilities;
+  if (c.role === '無面者') {
+    if (state.ex <= 1) abilities = (MASTER_ABILITIES['傳謠人'] || []).slice();
+    else abilities = (MASTER_ABILITIES['深潛者'] || []).slice();
+  } else {
+    abilities = (MASTER_ABILITIES[c.role] || []).slice();
+  }
+  // 醫生 共用版：醫生有「無視友好」(非絕對) 時加入
+  if (c.name === '醫生' && hasTrait(c, '無視友好') && !hasTrait(c, '絕對無視友好')) {
+    abilities = abilities.concat(DOCTOR_SHARED);
+  }
+  return abilities;
+}
+
+// 規則 Y（每劇本一條 Y1，瘋狂的真相 開啟時可有 Y2）
+const RULE_Y_DEFS = {
+  '外神合唱曲':   { roles: ['關鍵人物','祭品','永生者'], desc: '輪迴結束時 ≥5 名生存角色身上各有 ≥1 枚密謀 → 失敗' },
+  '達貢的福音書': { roles: ['關鍵人物','邪教徒','深潛者'], desc: '輪迴結束時 神社密謀 ≥ ex 槽 → 失敗' },
+  '黃衣之王':     { roles: ['祭品','邪教徒'], desc: '輪迴結束時 本輪 ex 槽曾增加過 → 失敗' },
+  '巨大定時炸彈Y':{ roles: ['魔女','深潛者'], desc: '輪迴結束時 魔女初始區域密謀 ≥2 → 失敗' },
+  '染血的儀式':   { roles: ['魔女','永生者'], desc: '輪迴結束時 屍體數 ≥ ex 槽 → 失敗' },
+};
+
+// 規則 X（每劇本兩條 X1, X2）
+const RULE_X_DEFS = {
+  '流言四起': {
+    roles: ['傳謠人'],
+    desc: '劇作家任意能力：任意版圖 +1 密謀（一輪一次）',
+    masterAbility: {
+      id: 'rule_rumor', desc: '任意版圖 +1 密謀（一輪一次）', freq: 'loop',
+      needsTarget: 'anyLoc',
+      check: () => true,
+      apply: (s, _c, t, log) => {
+        const loc = s.locations.find(l => l.id === t.id);
+        loc.conspiracy += 1;
+        log.push(`${loc.name} 密謀 +1`);
+      },
+    },
+  },
+  '抗爭者':           { roles: ['傳謠人','巫師','殺人狂'], desc: '無額外效果' },
+  '見證恐懼':         { roles: ['傳謠人','目擊者'], desc: '無額外效果' },
+  '伊斯之偉大種族':   { roles: ['殺人狂','時間旅者'], desc: '無額外效果' },
+  '深淵之都的私語':   { roles: ['深潛者','偏執狂'], desc: '偏執狂死亡 → 玩家失敗' },
+  '無貌之神':         { roles: ['巫師','無面者'], desc: '無額外效果' },
+  '瘋狂的真相':       { roles: [], desc: 'ex≥2 時規則 Y 切換為另一個 Y；情報商必須登場', requiresInformant: true },
+};
+
+const ROLE_CAP = { '傳謠人': 1, '深潛者': 1, '巫師': 1 };
+
+// 事件定義
+const EVENT_DEFS = {
+  '瘋狂殺人':     { desc: '與當事人同地一名角色死亡（劇作家選，可包含當事人）' },
+  '廷達羅斯之嗅': { desc: '使用當事人「角色密謀」≥不安上限為觸發條件；觸發後本輪剩餘事件再觸發 玩家立刻輸' },
+  '邪氣汙染':     { desc: '神社放置 2 枚密謀' },
+  '醫院事故':     { desc: '醫院密謀=1 → 醫院全員死亡；≥2 → 全員死亡，玩家輸' },
+  '不安擴散':     { desc: '劇作家：任一角色 +1 不安、任一角色 +1 角色密謀' },
+  '送葬':         { desc: '觸發判定為當事人不安 ≥（上限 −1）；事件後玩家須選一名角色死亡' },
+  '集體自殺':     { desc: '當事人有 ≥1 角色密謀 → 當事人所在區域所有角色死亡' },
+  '失蹤':         { desc: '將當事人移動至任意版圖（可同版圖），往該版圖放置 1 枚密謀（劇作家選）' },
+  '暴亂':         { desc: '學校密謀 ≥1 → 學校全員死亡；都市密謀 ≥1 → 都市全員死亡' },
+  '滅絕之火':     { desc: '若為本輪迴第一個觸發的事件 → 所有角色和玩家死亡' },
+  '發現':         { desc: 'ex 槽 +1' },
+};
+
+// 牌庫
+const PLAYER_CARDS = [
+  { id: 'p_mv_v', name: '移動上下',  type: 'move',     subtype: 'v', count: 3, once: false },
+  { id: 'p_mv_h', name: '移動左右',  type: 'move',     subtype: 'h', count: 3, once: false },
+  { id: 'p_ax_p1',name: '不安+1',    type: 'anxiety',  delta: 1,     count: 3, once: false },
+  { id: 'p_ax_m1',name: '不安-1',    type: 'anxiety',  delta: -1,    count: 3, once: true  },
+  { id: 'p_fr_p1',name: '友好+1',    type: 'friendly', delta: 1,     count: 3, once: false },
+  { id: 'p_fr_p2',name: '友好+2',    type: 'friendly', delta: 2,     count: 3, once: true  },
+  { id: 'p_no_co',name: '禁止密謀',  type: 'forbid',   forbids: 'conspiracy', count: 1, once: false },
+  { id: 'p_no_mv',name: '禁止移動',  type: 'forbid',   forbids: 'move',       count: 3, once: true  },
+];
+const MASTERMIND_CARDS = [
+  { id: 'm_co_p2',name: '密謀+2',    type: 'conspiracy', delta: 2,   count: 1, once: true  },
+  { id: 'm_co_p1',name: '密謀+1',    type: 'conspiracy', delta: 1,   count: 1, once: false },
+  { id: 'm_mv_v', name: '移動上下',  type: 'move',     subtype: 'v', count: 1, once: false },
+  { id: 'm_mv_h', name: '移動左右',  type: 'move',     subtype: 'h', count: 1, once: false },
+  { id: 'm_mv_d', name: '移動斜向',  type: 'move',     subtype: 'd', count: 1, once: true  },
+  { id: 'm_no_fr',name: '禁止友好',  type: 'forbid',   forbids: 'friendly',   count: 1, once: false },
+  { id: 'm_no_ax',name: '禁止不安',  type: 'forbid',   forbids: 'anxiety',    count: 1, once: false },
+  { id: 'm_ax_p1',name: '不安+1',    type: 'anxiety',  delta: 1,     count: 2, once: false },
+  { id: 'm_ax_m1',name: '不安-1',    type: 'anxiety',  delta: -1,    count: 1, once: false },
+];
+
+const SCRIPT_DEFAULT_TEXT = `劇本名稱：校園盛宴
+
+Y1 巨大定時炸彈Y
+X1 抗爭者 X2 流言四起
+
+輪迴次數 3
+輪迴天數 4
+
+男學生 傳謠人
+女學生 魔女
+大小姐 殺人狂
+巫女 平民
+刑警 平民
+職員 巫師
+醫生 深潛者
+
+2 失蹤 大小姐
+3 邪氣汙染 巫女
+4 瘋狂殺人 男學生
+
+劇本說明：略`;
+
+// =========================================
+// 劇本解析
+// =========================================
+const CN_NUM = {一:1,二:2,三:3,四:4,五:5,六:6,七:7,八:8,九:9,十:10};
+
+function parseScript(text) {
+  const out = { loops: 1, daysPerLoop: 4, characters: [], events: [], Y1:null, Y2:null, X1:null, X2:null, name: null, description: null };
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+  for (const line of lines) {
+    let m;
+    // 劇本名稱 / 說明（純記錄不影響流程）
+    m = line.match(/^劇本名稱[：:]\s*(.+)/);
+    if (m) { out.name = m[1].trim(); continue; }
+    m = line.match(/^劇本說明[：:]\s*(.*)/);
+    if (m) { out.description = m[1].trim(); continue; }
+    // Y/X 規則
+    m = line.match(/^Y1\s*(.+)/);
+    if (m) { out.Y1 = m[1].trim(); continue; }
+    m = line.match(/^Y2\s*(.+)/);
+    if (m) { out.Y2 = m[1].trim(); continue; }
+    // X1 與 X2 可能寫在同一行
+    if (/^X[12]/.test(line)) {
+      const x1m = line.match(/X1\s*(.+?)(?=\s*(?:X2|$))/);
+      if (x1m) out.X1 = x1m[1].trim();
+      const x2m = line.match(/X2\s*(.+)$/);
+      if (x2m) out.X2 = x2m[1].trim();
+      continue;
+    }
+    // 計數
+    if (line.includes('輪迴次數') || line.includes('輪迴數')) {
+      const n = parseInt(line.replace(/[^\d]/g, ''));
+      if (n) out.loops = n;
+      continue;
+    }
+    if (line.includes('一輪天數') || line.includes('輪迴天數') || /^\s*天數/.test(line)) {
+      const n = parseInt(line.replace(/[^\d]/g, ''));
+      if (n) out.daysPerLoop = n;
+      continue;
+    }
+    // 標題列跳過
+    if (line.includes('角色與身分') || line.includes('事件與當事人')) continue;
+    // 事件：第N天 + 事件名 + 當事人  或  N + 事件名 + 當事人
+    const evM = line.match(/^(?:第)?(\S+?)(?:天)?\s+(\S+)\s+(\S+)$/);
+    if (evM) {
+      const dayStr = evM[1];
+      let day = /^\d+$/.test(dayStr) ? parseInt(dayStr) : CN_NUM[dayStr];
+      if (day && EVENT_DEFS[evM[2]]) {
+        out.events.push({ day, event: evM[2], target: evM[3] });
+        continue;
+      }
+    }
+    // 角色：<角色名> <身分> [<出場日/輪>]
+    const charM = line.match(/^(\S+)\s+(\S+)(?:\s+(\d+))?$/);
+    if (charM && CHAR_DEFS[charM[1]]) {
+      const obj = { name: charM[1], role: charM[2] };
+      if (charM[3]) {
+        const n = parseInt(charM[3]);
+        if (charM[1] === '轉校生') obj.appearanceDay = n;
+        else if (charM[1] === '神靈') obj.appearanceLoop = n;
+      }
+      out.characters.push(obj);
+    }
+  }
+  return out;
+}
+
+function computeExpectedRoles(script) {
+  // 由 Y1 + X1 + X2 拼出預期身分清單，套用上限後以平民補滿
+  const list = [];
+  if (script.Y1 && RULE_Y_DEFS[script.Y1]) list.push(...(RULE_Y_DEFS[script.Y1].roles || []));
+  if (script.X1 && RULE_X_DEFS[script.X1]) list.push(...(RULE_X_DEFS[script.X1].roles || []));
+  if (script.X2 && RULE_X_DEFS[script.X2]) list.push(...(RULE_X_DEFS[script.X2].roles || []));
+  // 套用上限（傳謠人/深潛者/巫師 各最多一名）
+  const seen = {};
+  const capped = [];
+  for (const r of list) {
+    if (ROLE_CAP[r]) {
+      seen[r] = (seen[r] || 0) + 1;
+      if (seen[r] > ROLE_CAP[r]) continue; // 超過部分被略過（用平民代替）
+    }
+    capped.push(r);
+  }
+  // 補平民
+  while (capped.length < script.characters.length) capped.push('平民');
+  return capped;
+}
+
+function validateScript(script) {
+  const errs = [];
+  // Y/X 規則存在
+  if (!script.Y1) errs.push('缺少 Y1 規則');
+  else if (!RULE_Y_DEFS[script.Y1]) errs.push(`未知 Y 規則：${script.Y1}`);
+  if (script.Y2 && !RULE_Y_DEFS[script.Y2]) errs.push(`未知 Y 規則：${script.Y2}`);
+  if (!script.X1) errs.push('缺少 X1 規則');
+  else if (!RULE_X_DEFS[script.X1]) errs.push(`未知 X 規則：${script.X1}`);
+  if (!script.X2) errs.push('缺少 X2 規則');
+  else if (!RULE_X_DEFS[script.X2]) errs.push(`未知 X 規則：${script.X2}`);
+  // 瘋狂的真相 → 情報商必須登場
+  const hasMadTruth = script.X1 === '瘋狂的真相' || script.X2 === '瘋狂的真相';
+  if (hasMadTruth) {
+    if (!script.characters.some(c => c.name === '情報商')) errs.push('瘋狂的真相 規則：情報商必須登場');
+    if (!script.Y2) errs.push('瘋狂的真相 規則：必須提供 Y2');
+  }
+  // 祭品 必須作為某事件當事人
+  const sacrificeChars = script.characters.filter(c => c.role === '祭品').map(c => c.name);
+  const eventTargets = new Set(script.events.map(e => e.target));
+  for (const sname of sacrificeChars) {
+    if (!eventTargets.has(sname)) {
+      errs.push(`祭品 ${sname} 必須作為某事件的當事人`);
+    }
+  }
+  // X1 == X2 不允許
+  if (script.X1 && script.X2 && script.X1 === script.X2) {
+    errs.push('X1 與 X2 不可相同');
+  }
+  // 規則必須身分數量是否超過角色數
+  const requiredRoles = [];
+  if (script.Y1 && RULE_Y_DEFS[script.Y1]) requiredRoles.push(...(RULE_Y_DEFS[script.Y1].roles || []));
+  if (script.X1 && RULE_X_DEFS[script.X1]) requiredRoles.push(...(RULE_X_DEFS[script.X1].roles || []));
+  if (script.X2 && RULE_X_DEFS[script.X2]) requiredRoles.push(...(RULE_X_DEFS[script.X2].roles || []));
+  const seenReq = {};
+  const cappedReq = [];
+  for (const r of requiredRoles) {
+    if (ROLE_CAP[r]) {
+      seenReq[r] = (seenReq[r] || 0) + 1;
+      if (seenReq[r] > ROLE_CAP[r]) continue;
+    }
+    cappedReq.push(r);
+  }
+  if (cappedReq.length > script.characters.length) {
+    errs.push(`角色數不足：Y/X 規則需要至少 ${cappedReq.length} 個身分，但劇本只有 ${script.characters.length} 名角色`);
+  }
+  // 角色身分多重集 對應檢查
+  const expected = computeExpectedRoles(script).slice().sort();
+  const actual = script.characters.map(c => c.role).slice().sort();
+  if (expected.length !== actual.length) {
+    errs.push(`身分數量不符：實際 ${actual.length}，預期 ${expected.length}`);
+  } else {
+    for (let i = 0; i < expected.length; i++) {
+      if (expected[i] !== actual[i]) {
+        errs.push(`身分組合不符：實際 [${actual.join(',')}] 預期 [${expected.join(',')}]`);
+        break;
+      }
+    }
+  }
+  // 角色 / 身分 已知性
+  for (const c of script.characters) {
+    if (!CHAR_DEFS[c.name]) errs.push(`未知角色：${c.name}`);
+    if (!ROLE_DEFS[c.role]) errs.push(`未知身分：${c.role}`);
+  }
+  // 事件
+  const charNames = new Set(script.characters.map(c => c.name));
+  const usedTargets = new Set();
+  for (const e of script.events) {
+    if (!EVENT_DEFS[e.event]) errs.push(`未知事件：${e.event}`);
+    if (!charNames.has(e.target)) errs.push(`事件當事人不在角色清單中：${e.target}`);
+    if (usedTargets.has(e.target)) errs.push(`事件當事人重複使用：${e.target}`);
+    usedTargets.add(e.target);
+  }
+  return errs;
+}
+
+// =========================================
+// 狀態
+// =========================================
+let state = null;
+let pendingConfirm = null;
+
+function newGame(script) {
+  state = {
+    phase: 'mastermind',
+    script,
+    loop: 1,
+    day: 1,
+    characters: script.characters.map((c, i) => {
+      const def = CHAR_DEFS[c.name];
+      return {
+        id: i,
+        name: c.name,
+        role: c.role,
+        appearanceDay: c.appearanceDay || null,
+        appearanceLoop: c.appearanceLoop || null,
+        position: def.dynamicInit ? null : def.initPos,
+        anxietyLimit: def.anxietyLimit,
+        anxiety: 0,
+        friendly: 0,
+        conspiracy: 0,
+        dead: false,
+        offBoard: false,
+      };
+    }),
+    locations: LOCATIONS.map(l => ({ ...l, conspiracy: 0 })),
+    mPlays: [],
+    pPlays: [],
+    selectedCard: null,
+    mUsedOnceCount: {},  // {cardId: 已用張數}
+    pUsedOnceCount: {},
+    log: [],
+    tindalosActive: false,
+    loopResult: null,        // 'win' | 'lose' | null
+    loopReason: '',
+    pastLoops: [],           // [{ loop, result, reason }]
+    pendingChoice: null,     // 事件需要選擇時用
+    eventOutcome: null,      // 當前事件結果
+    dailyAbilityUsed: {},    // {charId_abilId:true} 每日重置
+    loopAbilityUsed: {},     // {charId_abilId:true} 每輪重置
+    revealedRoles: {},       // {charId: role} 已被公開的身分
+    friendlyLog: [],         // 當日友好階段紀錄
+    secretCollapsed: false,
+    announcementCollapsed: false,
+    eventBlockedTargets: new Set(),  // 本輪以這些角色為當事人的事件不會觸發
+    revealedEventTargets: {},        // {day: targetName} 已公開的事件當事人
+    movementUnlocked: new Set(),     // 本輪解除移動限制的角色名（醫生友好3）
+    ex: 0,                           // ex 槽（神話知識），跨輪累計
+    exAtLoopStart: 0,                // 輪開始時的 ex 槽（用於瘋狂的真相 Y 切換）
+    exIncreasedThisLoop: false,      // 本輪 ex 是否曾增加（用於 黃衣之王）
+    guardedChars: new Set(),         // 持有護衛指示物的角色 id（刑警友好5）
+    masterAbilityLog: [],
+    publicMasterAbilityLog: [],
+    announcementLog: [],        // 公告欄：顯示剛剛發生的友好/劇作家能力
+    revealedXRules: {},              // 已公開的 X 規則 {X1?:true, X2?:true}
+  };
+  syncOffBoard();
+  applyPassiveLoopStart();
+}
+
+// ex 槽
+function incrementEx(n) {
+  state.ex = (state.ex || 0) + n;
+  state.exIncreasedThisLoop = true;
+  // 等級 4：玩家立刻輸掉所有輪迴
+  if (state.ex >= 4 && state.phase !== 'guess' && state.phase !== 'gameover') {
+    while (state.pastLoops.length < state.script.loops) {
+      state.pastLoops.push({ loop: state.pastLoops.length + 1, result: 'lose', reason: 'ex 槽 ≥ 4 強制結束' });
+    }
+    state.phase = 'guess';
+    state.guesses = {};
+  }
+}
+
+// 取得本輪實際生效的 Y 規則（瘋狂的真相 → 看當前 ex 槽即時切換）
+function getActiveYRule() {
+  const isMadTruth = state.script.X1 === '瘋狂的真相' || state.script.X2 === '瘋狂的真相';
+  if (isMadTruth && state.ex >= 2 && state.script.Y2) {
+    return state.script.Y2;
+  }
+  return state.script.Y1;
+}
+
+// Y 規則失敗條件（在輪結束時檢查）
+function checkYRuleFailure() {
+  const yName = getActiveYRule();
+  if (!yName || !RULE_Y_DEFS[yName]) return;
+  let triggered = false;
+  let reason = '';
+  switch (yName) {
+    case '外神合唱曲': {
+      const aliveWithCons = state.characters.filter(c => !c.dead && c.conspiracy >= 1);
+      if (aliveWithCons.length >= 5) { triggered = true; reason = '5 名以上生存角色身上各有 ≥1 枚密謀'; }
+      break;
+    }
+    case '達貢的福音書': {
+      const shrine = state.locations.find(l => l.id === 1);
+      if (shrine.conspiracy >= state.ex) { triggered = true; reason = '神社密謀 ≥ ex 槽值'; }
+      break;
+    }
+    case '黃衣之王': {
+      if (state.exIncreasedThisLoop) { triggered = true; reason = '本輪 ex 槽曾增加'; }
+      break;
+    }
+    case '巨大定時炸彈Y': {
+      const witch = state.characters.find(c => c.role === '魔女');
+      if (witch) {
+        const initLoc = CHAR_DEFS[witch.name].initPos;
+        const loc = state.locations.find(l => l.id === initLoc);
+        if (loc.conspiracy >= 2) { triggered = true; reason = '魔女初始區域密謀 ≥2'; }
+      }
+      break;
+    }
+    case '染血的儀式': {
+      const dead = state.characters.filter(c => c.dead).length;
+      if (dead >= state.ex) { triggered = true; reason = `屍體數 ≥ ex 槽值（${state.ex}）`; }
+      break;
+    }
+  }
+  if (triggered) loseLoop(`規則 ${yName} 失敗條件：${reason}`, 'fail');
+}
+function getCardEffectiveCount(card) {
+  // ex 槽 ≥ 3：玩家獲得兩張禁止密謀（變成三張）
+  if (card.id === 'p_no_co' && state.ex >= 3) return 3;
+  return card.count;
+}
+
+// 黑貓 被動：每輪開始時神社 +1 密謀
+function applyPassiveLoopStart() {
+  if (state.characters.some(c => c.name === '黑貓' && !c.dead)) {
+    const shrine = state.locations.find(l => l.id === 1);
+    shrine.conspiracy += 1;
+  }
+}
+
+// 同步離場狀態：神靈（出場輪）/ 轉校生（出場日）
+function syncOffBoard() {
+  for (const c of state.characters) {
+    if (c.dead) { c.offBoard = false; continue; }
+    let off = false;
+    if (c.appearanceLoop && state.loop < c.appearanceLoop) off = true;
+    if (c.appearanceDay && state.day < c.appearanceDay) off = true;
+    c.offBoard = off;
+  }
+}
+
+// 角色是否「在場上」（活著且已登場）
+function isOnBoard(c) { return !c.dead && !c.offBoard; }
+
+function resetLoop() {
+  for (const c of state.characters) {
+    const def = CHAR_DEFS[c.name];
+    // 動態初始位置（手下）→ 由劇作家在 masterPickInit 階段設定
+    c.position = def.dynamicInit ? null : def.initPos;
+    c.dead = false;
+    c.anxiety = 0;
+    c.friendly = 0;
+    c.conspiracy = 0;
+  }
+  state.locations.forEach(l => l.conspiracy = 0);
+  state.day = 1;
+  state.mPlays = [];
+  state.pPlays = [];
+  state.selectedCard = null;
+  state.mUsedOnceCount = {};
+  state.pUsedOnceCount = {};
+  state.tindalosActive = false;
+  state.loopResult = null;
+  state.loopReason = '';
+  state.pendingChoice = null;
+  state.eventOutcome = null;
+  state.loopAbilityUsed = {};
+  state.dailyAbilityUsed = {};
+  state.revealedRoles = {};
+  state.friendlyLog = [];
+  state.eventBlockedTargets = new Set();
+  state.revealedEventTargets = {};
+  state.movementUnlocked = new Set();
+  state.armyDeathImmunity = false;
+  state.guardedChars = new Set();
+  state.masterAbilityLog = [];
+  state.publicMasterAbilityLog = [];
+  state.announcementLog = [];
+  state.exAtLoopStart = state.ex;
+  state.exIncreasedThisLoop = false;
+  syncOffBoard();
+  applyPassiveLoopStart();
+  // 紀錄不重置（以便玩家回顧過去輪資訊）
+}
+
+// =========================================
+// 工具
+// =========================================
+function getCard(side, id) {
+  return (side === 'm' ? MASTERMIND_CARDS : PLAYER_CARDS).find(c => c.id === id);
+}
+function targetEqual(a, b) { return a.type === b.type && a.id === b.id; }
+function getCharsInLocation(qid) {
+  return state.characters.filter(c => c.position === qid && !c.dead && !c.offBoard);
+}
+function getCharByName(n) { return state.characters.find(c => c.name === n); }
+function quadName(q) { return { 1:'神社', 2:'醫院', 3:'都會', 4:'學校' }[q]; }
+function categoryLabel(c) { return { conspiracy:'密謀', friendly:'友好', anxiety:'不安', move:'移動' }[c]; }
+function targetName(t) {
+  if (t.type === 'loc') return state.locations.find(l => l.id === t.id).name + '(地點)';
+  return state.characters.find(c => c.id === t.id).name;
+}
+function showPrivateStats() {
+  // 已改為玩家也可見所有不安/密謀/友好數值
+  return true;
+}
+function addAnnouncement(kind, text) {
+  if (!state) return;
+  state.announcementLog = state.announcementLog || [];
+  const labelMap = {
+    master: '劇作家能力',
+    forced: '強制能力',
+    friendly: '友好能力',
+    event: '事件',
+    system: '系統',
+  };
+  state.announcementLog.unshift({
+    loop: state.loop,
+    day: state.day,
+    kind,
+    label: labelMap[kind] || kind,
+    text,
+  });
+  if (state.announcementLog.length > 12) state.announcementLog.length = 12;
+}
+function stripHiddenAbilityHints(text) {
+  return String(text || '')
+    // 規則/身分來源不應在公開公告中出現，例如「(流言四起)」或「（流言四起）」。
+    .replace(/\s*[（(][^）)]*[）)]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+function publicMasterAbilityText(effectLines) {
+  const effects = (effectLines || []).map(stripHiddenAbilityHints).filter(Boolean);
+  if (effects.length === 0) return '劇作家使用了能力。沒有公開可見的效果。';
+  return `劇作家使用了能力，造成效果：${effects.join('、')}`;
+}
+function publicForcedAbilityText(effectLines) {
+  const visible = [];
+  for (const raw of (effectLines || [])) {
+    const line = stripHiddenAbilityHints(raw);
+    if (!line) continue;
+    // 不公開「誰的強制能力觸發」或「因此公開了什麼身分」。只保留可觀察結果。
+    if (line.includes('強制能力觸發')) continue;
+    if (line.includes('身分為')) continue;
+    visible.push(line.replace(/^☠\s*/, ''));
+  }
+  if (visible.length === 0) return '回合結束時沒有公開可見的變化。';
+  return `回合結束時：${visible.join('、')}`;
+}
+function toggleAnnouncement() {
+  state.announcementCollapsed = !state.announcementCollapsed;
+  render();
+}
+function hasTrait(char, trait) {
+  const cdef = CHAR_DEFS[char.name];
+  if (cdef && cdef.traits && cdef.traits.includes(trait)) return true;
+  const rdef = ROLE_DEFS[char.role];
+  if (rdef && rdef.traits && rdef.traits.includes(trait)) return true;
+  return false;
+}
+
+// =========================================
+// 移動
+// =========================================
+function combineMoves(subs) {
+  if (subs.length === 0) return null;
+  if (subs.length === 1) return subs[0];
+  const set = subs.slice().sort().join(',');
+  if (set === 'h,h') return 'h';
+  if (set === 'v,v') return 'v';
+  if (set === 'd,d') return 'd';
+  if (set === 'h,v') return 'd';
+  if (set === 'd,v') return 'v';
+  if (set === 'd,h') return 'h';
+  return null;
+}
+function applyMoveRaw(q, t) {
+  const map = {
+    v: { 1:4, 2:3, 3:2, 4:1 },
+    h: { 1:2, 2:1, 3:4, 4:3 },
+    d: { 1:3, 2:4, 3:1, 4:2 },
+  };
+  return map[t][q];
+}
+function applyMoveRestricted(char, moveType) {
+  const newPos = applyMoveRaw(char.position, moveType);
+  // 醫生友好3 持續效果：取消該角色的移動限制
+  if (state.movementUnlocked && state.movementUnlocked.has(char.name)) {
+    return { newPos, blocked: false };
+  }
+  const def = CHAR_DEFS[char.name];
+  if (def && def.forbidden && def.forbidden.includes(newPos)) {
+    return { newPos: char.position, blocked: true, attempted: newPos };
+  }
+  return { newPos, blocked: false };
+}
+
+// =========================================
+// 死亡 / 勝負
+// =========================================
+function killCharacter(c, log) {
+  if (c.dead) return false;
+  // 護衛 優先於不死：消耗護衛代替死亡
+  if (state.guardedChars && state.guardedChars.has(c.id)) {
+    state.guardedChars.delete(c.id);
+    log.push(`${c.name} 的護衛指示物消耗，免於死亡`);
+    return false;
+  }
+  if (hasTrait(c, '不死')) {
+    return false; // 靜默失敗，不對玩家提示
+  }
+  c.dead = true;
+  log.push(`☠ ${c.name} 死亡`);
+  if (c.role === '關鍵人物') {
+    loseLoop(`關鍵人物 ${c.name} 死亡`);
+  }
+  // 深淵之都的私語：偏執狂 死亡 → 玩家失敗
+  if (c.role === '偏執狂' && (state.script.X1 === '深淵之都的私語' || state.script.X2 === '深淵之都的私語')) {
+    loseLoop(`深淵之都的私語：偏執狂 ${c.name} 死亡`);
+  }
+  if (c.role === '深潛者') {
+    state.revealedRoles = state.revealedRoles || {};
+    state.revealedRoles[c.id] = c.role;
+    log.push(`${c.name} 的身分為 ${c.role}`);
+    incrementEx(1);
+  }
+  return true;
+}
+function loseLoop(reason, kind = 'fail') {
+  // kind: 'fail' (玩家失敗) 或 'death' (玩家死亡)
+  // 軍人 友好5：本輪「玩家死亡」敘述不會導致玩家輸
+  if (kind === 'death' && state.armyDeathImmunity) {
+    return; // 玩家死亡 被免疫
+  }
+  if (!state.loopResult) {
+    state.loopResult = 'lose';
+    state.loopReason = reason;
+    state.loopLossKind = kind;
+  }
+}
+
+// =========================================
+// 結算每日出牌
+// =========================================
+function resolveCards() {
+  const allPlays = [
+    ...state.mPlays.map(p => ({ ...p, side:'m', card:getCard('m', p.cardId) })),
+    ...state.pPlays.map(p => ({ ...p, side:'p', card:getCard('p', p.cardId) })),
+  ];
+  const groups = {};
+  for (const p of allPlays) {
+    const k = `${p.target.type}_${p.target.id}`;
+    if (!groups[k]) groups[k] = { target: p.target, plays: [] };
+    groups[k].plays.push(p);
+  }
+
+  // 過濾：對死亡角色的牌一律無效
+  for (const k in groups) {
+    const g = groups[k];
+    if (g.target.type === 'char') {
+      const c = state.characters.find(c => c.id === g.target.id);
+      if (c && c.dead) {
+        g.allDead = true;
+      }
+    }
+  }
+
+  const dayLog = { day: state.day, loop: state.loop, kind: 'cards', groups: [] };
+
+  for (const k in groups) {
+    const g = groups[k];
+    const isLoc = g.target.type === 'loc';
+    const charObj = !isLoc ? state.characters.find(c => c.id === g.target.id) : null;
+    const locObj  = isLoc  ? state.locations.find(l => l.id === g.target.id) : null;
+
+    if (g.allDead) {
+      dayLog.groups.push({ target: g.target, plays: g.plays, cancelled: g.plays.map((_,i)=>i), effects: ['角色已死亡，所有牌無效'] });
+      continue;
+    }
+
+    // 時間旅者：劇作家不能對其用禁止友好（自動失效）
+    let extraCancel = new Set();
+    if (charObj && charObj.role === '時間旅者') {
+      g.plays.forEach((p, i) => {
+        if (p.side === 'm' && p.card.type === 'forbid' && p.card.forbids === 'friendly') {
+          extraCancel.add(i);
+        }
+      });
+    }
+
+    const triggered = { conspiracy:false, friendly:false, anxiety:false, move:false };
+    for (let i = 0; i < g.plays.length; i++) {
+      const p = g.plays[i];
+      if (extraCancel.has(i)) continue;
+      if (p.card.type === 'forbid') {
+        const f = p.card.forbids;
+        const hasMatch = g.plays.some((q, j) => !extraCancel.has(j) && (f==='move' ? q.card.type==='move' : q.card.type === f));
+        if (hasMatch) triggered[f] = true;
+      }
+    }
+    const cancelled = new Set(extraCancel);
+    g.plays.forEach((p, idx) => {
+      if (cancelled.has(idx)) return;
+      if (p.card.type === 'forbid') {
+        if (!triggered[p.card.forbids]) cancelled.add(idx);
+      } else {
+        const cat = p.card.type === 'move' ? 'move' : p.card.type;
+        if (triggered[cat]) cancelled.add(idx);
+      }
+    });
+    const effects = [];
+    if (extraCancel.size > 0) effects.push('時間旅者：禁止友好自動失效');
+    const active = g.plays.filter((_, i) => !cancelled.has(i));
+
+    if (isLoc) {
+      for (const p of active) {
+        if (p.card.type === 'conspiracy') {
+          locObj.conspiracy += p.card.delta;
+          effects.push(`密謀 +${p.card.delta}`);
+        } else if (p.card.type === 'forbid' && p.card.forbids === 'conspiracy') {
+          effects.push(`禁止密謀 觸發`);
+        } else {
+          effects.push(`${p.card.name} 對地點無效`);
+        }
+      }
+    } else {
+      const moveSubs = active.filter(p => p.card.type === 'move').map(p => p.card.subtype);
+      if (moveSubs.length > 0) {
+        const r = combineMoves(moveSubs);
+        if (r) {
+          const oldQ = charObj.position;
+          const res = applyMoveRestricted(charObj, r);
+          charObj.position = res.newPos;
+          if (res.blocked) {
+            effects.push(`移動 ${moveSubs.join('+')}=${r}：${quadName(oldQ)}→${quadName(res.attempted)} 受限制 (停留)`);
+          } else {
+            effects.push(`移動 ${moveSubs.join('+')}=${r}：${quadName(oldQ)} → ${quadName(charObj.position)}`);
+          }
+        }
+      }
+      for (const p of active) {
+        if (p.card.type === 'anxiety') {
+          charObj.anxiety = Math.max(0, charObj.anxiety + p.card.delta);
+          effects.push(`不安 ${p.card.delta>0?'+':''}${p.card.delta}`);
+        }
+      }
+      for (const p of active) {
+        if (p.card.type === 'friendly') {
+          // 絕對無視友好 / 無視友好 只在觸發友好「能力」時生效，不擋友好牌的數值
+          const b = charObj.friendly;
+          charObj.friendly = Math.max(0, charObj.friendly + p.card.delta);
+          effects.push(`友好 +${p.card.delta}：${b}→${charObj.friendly}`);
+        }
+      }
+      for (const p of active) {
+        if (p.card.type === 'conspiracy') {
+          charObj.conspiracy += p.card.delta;
+          effects.push(`角色密謀 +${p.card.delta}`);
+        }
+      }
+      for (const cat of ['conspiracy','friendly','anxiety','move']) {
+        if (triggered[cat]) effects.push(`禁止${categoryLabel(cat)} 觸發`);
+      }
+    }
+    dayLog.groups.push({ target: g.target, plays: g.plays, cancelled: [...cancelled], effects });
+  }
+  state.log.unshift(dayLog);
+
+  for (const p of state.mPlays) {
+    const c = getCard('m', p.cardId);
+    if (c.once) state.mUsedOnceCount[c.id] = (state.mUsedOnceCount[c.id] || 0) + 1;
+  }
+  for (const p of state.pPlays) {
+    const c = getCard('p', p.cardId);
+    if (c.once) state.pUsedOnceCount[c.id] = (state.pUsedOnceCount[c.id] || 0) + 1;
+  }
+}
+
+// =========================================
+// 事件處理
+// =========================================
+function todayEvent() {
+  return state.script.events.find(e => e.day === state.day) || null;
+}
+
+function checkEventTrigger(event) {
+  const c = getCharByName(event.target);
+  if (!c || c.dead) return { triggered: false, reason: '當事人死亡或不存在' };
+  if (c.offBoard) return { triggered: false, reason: '當事人尚未登場' };
+  if (event.target === '黑貓') {
+    return { triggered: false, reason: '黑貓 被動效果' };
+  }
+  if (state.eventBlockedTargets && state.eventBlockedTargets.has(event.target)) {
+    return { triggered: false, reason: '當事人受能力影響，事件被封鎖' };
+  }
+  // 祭品：當事人事件中密謀視為不安處理
+  const useConspiracyAsAnxiety = c.role === '祭品';
+  const anxValue = useConspiracyAsAnxiety ? c.conspiracy : c.anxiety;
+  if (event.event === '廷達羅斯之嗅') {
+    return { triggered: c.conspiracy >= c.anxietyLimit, reason: `角色密謀 ${c.conspiracy} / 上限 ${c.anxietyLimit}` };
+  }
+  if (event.event === '送葬') {
+    return { triggered: anxValue >= c.anxietyLimit - 1, reason: `不安 ${anxValue} / 上限-1=${c.anxietyLimit-1}` };
+  }
+  return { triggered: anxValue >= c.anxietyLimit, reason: `不安 ${anxValue} / 上限 ${c.anxietyLimit}` };
+}
+
+function executeEvent(event, log) {
+  const character = getCharByName(event.target);
+
+  // 廷達羅斯之嗅 已啟動 + 此事件不是廷達羅斯本身 → 玩家死亡（仍會繼續執行該事件效果）
+  if (state.tindalosActive && event.event !== '廷達羅斯之嗅') {
+    loseLoop(`廷達羅斯之嗅啟動後事件「${event.event}」觸發`, 'death');
+  }
+
+  switch (event.event) {
+    case '邪氣汙染': {
+      const shrine = state.locations.find(l => l.id === 1);
+      shrine.conspiracy += 2;
+      log.push(`神社密謀 +2`);
+      return { needsChoice: false };
+    }
+    case '醫院事故': {
+      const hosp = state.locations.find(l => l.id === 2);
+      // 密謀≥1 → 醫院所有角色死亡；密謀≥2 → 玩家死亡（醫院仍全死）
+      if (hosp.conspiracy >= 1) {
+        state.characters.filter(c => c.position === 2 && !c.dead).forEach(c => killCharacter(c, log));
+      }
+      if (hosp.conspiracy >= 2) {
+        loseLoop('醫院事故密謀≥2，玩家死亡', 'death');
+      }
+      return { needsChoice: false };
+    }
+    case '廷達羅斯之嗅': {
+      state.tindalosActive = true;
+      log.push(`廷達羅斯之嗅 已啟動：本輪剩餘事件若觸發即玩家輸`);
+      return { needsChoice: false };
+    }
+    case '瘋狂殺人': {
+      // 劇作家選擇與當事人同地一名角色（包含當事人）死亡
+      const cands = state.characters.filter(c => c.position === character.position && !c.dead).map(c => c.id);
+      state.pendingChoice = { type: 'mastermindKill', candidates: cands, eventLog: log };
+      return { needsChoice: true };
+    }
+    case '不安擴散': {
+      state.pendingChoice = { type: 'mastermindUnease', step: 1, eventLog: log };
+      return { needsChoice: true };
+    }
+    case '送葬': {
+      // 觸發判定為 anxiety >= limit - 1，自動標示，後續玩家挑一名死亡
+      log.push(`送葬：玩家須選一名角色死亡`);
+      state.pendingChoice = { type: 'playerKill', eventLog: log };
+      return { needsChoice: true };
+    }
+    case '集體自殺': {
+      if (character.conspiracy >= 1) {
+        const killed = state.characters.filter(c => c.position === character.position && !c.dead && !c.offBoard);
+        killed.forEach(c => killCharacter(c, log));
+      } else {
+        log.push('當事人無密謀，無事');
+      }
+      return { needsChoice: false };
+    }
+    case '失蹤': {
+      // 劇作家選擇目的地（任意版圖，可同位置）
+      state.pendingChoice = { type: 'missingDest', characterId: character.id, eventLog: log };
+      return { needsChoice: true };
+    }
+    case '暴亂': {
+      const school = state.locations.find(l => l.id === 4);
+      if (school.conspiracy >= 1) {
+        state.characters.filter(c => c.position === 4 && !c.dead && !c.offBoard).forEach(c => killCharacter(c, log));
+      }
+      const city = state.locations.find(l => l.id === 3);
+      if (city.conspiracy >= 1) {
+        state.characters.filter(c => c.position === 3 && !c.dead && !c.offBoard).forEach(c => killCharacter(c, log));
+      }
+      return { needsChoice: false };
+    }
+    case '滅絕之火': {
+      // 本輪此前已觸發過的事件數（此事件本身的 log 條目尚未寫入，因此為前面的數量）
+      const triggeredCount = state.log.filter(e => e.kind === 'event' && e.triggered && e.loop === state.loop).length;
+      if (triggeredCount === 0) {
+        state.characters.forEach(c => killCharacter(c, log));
+        loseLoop('滅絕之火 為本輪第一個觸發事件，所有角色和玩家死亡', 'death');
+      } else {
+        log.push('非本輪第一個觸發事件，無事');
+      }
+      return { needsChoice: false };
+    }
+    case '發現': {
+      incrementEx(1);
+      log.push('ex 槽 +1');
+      return { needsChoice: false };
+    }
+  }
+  return { needsChoice: false };
+}
+
+function resolveMissingDest(charId, qid) {
+  const c = state.characters.find(x => x.id === charId);
+  const log = state.pendingChoice.eventLog;
+  // 禁區檢查（除非 movementUnlocked 解除）
+  const def = CHAR_DEFS[c.name];
+  const isUnlocked = state.movementUnlocked && state.movementUnlocked.has(c.name);
+  if (!isUnlocked && def && def.forbidden && def.forbidden.includes(qid)) {
+    return; // 拒絕：UI 應已 disabled，這是防呆
+  }
+  c.position = qid;
+  c.offBoard = false;
+  const loc = state.locations.find(l => l.id === qid);
+  loc.conspiracy += 1;
+  log.push(`${c.name} 失蹤至 ${quadName(qid)}，${loc.name} 密謀 +1`);
+  state.log[0].log = [...log];
+  state.pendingChoice = null;
+  render();
+}
+
+// =========================================
+// 友好能力階段
+// =========================================
+// =========================================
+// 劇作家任意能力階段
+// =========================================
+function startMasterAbilityPhase() {
+  state.phase = 'masterAbility';
+  state.masterAbilityLog = state.masterAbilityLog || [];
+  if (!hasAnyActivatableMasterAbility()) {
+    endMasterAbilityPhase();
+    return;
+  }
+  render();
+}
+
+function hasAnyActivatableMasterAbility() {
+  for (const c of state.characters) {
+    if (c.dead || c.offBoard) continue;
+    const abilities = getMasterAbilitiesFor(c);
+    for (const a of abilities) {
+      if (isMasterAbilityActivatable(c, a)) return true;
+    }
+  }
+  // 規則綁定能力（如 流言四起）
+  for (const ra of getRuleMasterAbilities()) {
+    if (isRuleAbilityActivatable(ra)) return true;
+  }
+  return false;
+}
+
+function getRuleMasterAbilities() {
+  const out = [];
+  for (const slot of ['X1','X2']) {
+    const name = state.script[slot];
+    if (name && RULE_X_DEFS[name] && RULE_X_DEFS[name].masterAbility) {
+      out.push({ slot, ruleName: name, ability: RULE_X_DEFS[name].masterAbility });
+    }
+  }
+  return out;
+}
+
+function isRuleAbilityActivatable(ra) {
+  const k = `rule_${ra.slot}_${ra.ability.id}`;
+  if (ra.ability.freq === 'day' && state.dailyAbilityUsed[k]) return false;
+  if (ra.ability.freq === 'loop' && state.loopAbilityUsed[k]) return false;
+  if (ra.ability.check && !ra.ability.check(state)) return false;
+  return true;
+}
+
+function tryUseRuleAbility(slot) {
+  const ra = getRuleMasterAbilities().find(x => x.slot === slot);
+  if (!ra || !isRuleAbilityActivatable(ra)) return;
+  if (ra.ability.needsTarget) {
+    state.pendingChoice = { type: 'ruleTarget', slot };
+    render();
+    return;
+  }
+  resolveRuleAbility(slot, null);
+}
+
+function resolveRuleAbility(slot, targetSpec) {
+  const ra = getRuleMasterAbilities().find(x => x.slot === slot);
+  if (!ra) return;
+  const k = `rule_${ra.slot}_${ra.ability.id}`;
+  if (ra.ability.freq === 'day') state.dailyAbilityUsed[k] = true;
+  if (ra.ability.freq === 'loop') state.loopAbilityUsed[k] = true;
+  let target = null;
+  if (targetSpec) {
+    const colonIdx = targetSpec.indexOf(':');
+    const kind = targetSpec.slice(0, colonIdx);
+    const idStr = targetSpec.slice(colonIdx + 1);
+    if (kind === 'loc') target = { kind:'loc', id: Number(idStr) };
+    else if (kind === 'char') target = state.characters.find(x => x.id === Number(idStr));
+  }
+  const beforeLen = state.masterAbilityLog.length;
+  ra.ability.apply(state, null, target, state.masterAbilityLog);
+  const effectLines = state.masterAbilityLog.splice(beforeLen);
+  const msg = publicMasterAbilityText(effectLines);
+  state.masterAbilityLog.push(msg);
+  addAnnouncement('master', msg);
+  state.pendingChoice = null;
+  render();
+}
+
+function getRuleTargetCandidates(slot) {
+  const ra = getRuleMasterAbilities().find(x => x.slot === slot);
+  if (!ra) return [];
+  if (ra.ability.needsTarget === 'anyLoc') {
+    return state.locations.map(l => ({ kind:'loc', id:l.id, label:l.name }));
+  }
+  return [];
+}
+
+function getMasterAbilityKey(charId, ability) {
+  return `m_${charId}_${ability.group || ability.id}`;
+}
+
+function isMasterAbilityUsed(charId, ability) {
+  const k = getMasterAbilityKey(charId, ability);
+  if (ability.freq === 'day') return !!state.dailyAbilityUsed[k];
+  if (ability.freq === 'loop') return !!state.loopAbilityUsed[k];
+  return false;
+}
+
+function markMasterAbilityUsed(charId, ability) {
+  const k = getMasterAbilityKey(charId, ability);
+  if (ability.freq === 'day') state.dailyAbilityUsed[k] = true;
+  if (ability.freq === 'loop') state.loopAbilityUsed[k] = true;
+}
+
+function isMasterAbilityActivatable(c, ability) {
+  if (c.dead) return false;
+  if (isMasterAbilityUsed(c.id, ability)) return false;
+  if (ability.check && !ability.check(state, c)) return false;
+  return true;
+}
+
+function tryUseMasterAbility(charId, abilIdx) {
+  const c = state.characters.find(x => x.id === charId);
+  const ability = getMasterAbilitiesFor(c)[abilIdx];
+  if (!isMasterAbilityActivatable(c, ability)) return;
+  if (ability.needsTarget) {
+    state.pendingChoice = { type: 'masterTarget', charId, abilIdx };
+    render();
+    return;
+  }
+  resolveMasterAbility(charId, abilIdx, null);
+}
+
+function resolveMasterAbility(charId, abilIdx, targetSpec) {
+  const c = state.characters.find(x => x.id === charId);
+  const ability = getMasterAbilitiesFor(c)[abilIdx];
+  let target = null;
+  if (targetSpec) {
+    const colonIdx = targetSpec.indexOf(':');
+    const kind = targetSpec.slice(0, colonIdx);
+    const idStr = targetSpec.slice(colonIdx + 1);
+    if (kind === 'char') target = state.characters.find(x => x.id === Number(idStr));
+    else if (kind === 'loc') target = { kind:'loc', id: Number(idStr) };
+  }
+  markMasterAbilityUsed(charId, ability);
+  const beforeLen = state.masterAbilityLog.length;
+  ability.apply(state, c, target, state.masterAbilityLog);
+  const effectLines = state.masterAbilityLog.splice(beforeLen);
+  const msg = publicMasterAbilityText(effectLines);
+  state.masterAbilityLog.push(msg);
+  addAnnouncement('master', msg);
+  state.pendingChoice = null;
+  render();
+}
+
+function getMasterTargetCandidates(charId, abilIdx) {
+  const c = state.characters.find(x => x.id === charId);
+  const ability = getMasterAbilitiesFor(c)[abilIdx];
+  if (ability.needsTarget === 'sameAreaCharNotSelf') {
+    return state.characters.filter(x => x.position===c.position && x.id!==c.id && !x.dead && !x.offBoard)
+      .map(x => ({ kind:'char', id:x.id, label:x.name }));
+  }
+  if (ability.needsTarget === 'sameAreaCharNotSelfWithAnxiety') {
+    return state.characters.filter(x => x.position===c.position && x.id!==c.id && !x.dead && !x.offBoard && x.anxiety>=1)
+      .map(x => ({ kind:'char', id:x.id, label:`${x.name} (不安 ${x.anxiety})` }));
+  }
+  if (ability.needsTarget === 'sameAreaCharIncSelf') {
+    return state.characters.filter(x => x.position===c.position && !x.dead)
+      .map(x => ({ kind:'char', id:x.id, label:x.name + (x.id===c.id?' (自己)':'') }));
+  }
+  if (ability.needsTarget === 'sameAreaCharOrLocPlace') {
+    const out = state.characters.filter(x => x.position===c.position && !x.dead)
+      .map(x => ({ kind:'char', id:x.id, label:x.name + (x.id===c.id?' (自己)':'') + ' (角色密謀)' }));
+    const loc = state.locations.find(l => l.id === c.position);
+    out.push({ kind:'loc', id:loc.id, label:loc.name+' (地點密謀)' });
+    return out;
+  }
+  if (ability.needsTarget === 'sameAreaCharNotSelfFriendly2') {
+    return state.characters.filter(x => x.position===c.position && x.id!==c.id && !x.dead && x.friendly>=2)
+      .map(x => ({ kind:'char', id:x.id, label:`${x.name} (友好 ${x.friendly})` }));
+  }
+  if (ability.needsTarget === 'sameAreaCharNotSelfFriendly2WithAnxiety') {
+    return state.characters.filter(x => x.position===c.position && x.id!==c.id && !x.dead && x.friendly>=2 && x.anxiety>=1)
+      .map(x => ({ kind:'char', id:x.id, label:`${x.name} (友好 ${x.friendly}, 不安 ${x.anxiety})` }));
+  }
+  return [];
+}
+
+function endMasterAbilityPhase() {
+  state.publicMasterAbilityLog = [...(state.masterAbilityLog || [])];
+  if (state.masterAbilityLog && state.masterAbilityLog.length > 0) {
+    state.log.unshift({ day: state.day, loop: state.loop, kind: 'masterAbility', log: [...state.masterAbilityLog] });
+  }
+  state.masterAbilityLog = [];
+  // 即使中途已輸，本日仍照常進行
+  startFriendlyPhase();
+}
+
+// =========================================
+// 友好能力階段
+// =========================================
+function startFriendlyPhase() {
+  state.phase = 'friendly';
+  state.friendlyLog = [];
+  render();
+}
+
+function getAbilityKey(charId, ability) {
+  // 若 ability 有 group，多個能力共用一個 use 槽（例如偏執狂的不安/密謀只能擇一）
+  return `${charId}_${ability.group || ability.id}`;
+}
+
+function isAbilityUsed(charId, ability) {
+  const k = getAbilityKey(charId, ability);
+  if (ability.freq === 'day') return !!state.dailyAbilityUsed[k];
+  if (ability.freq === 'loop') return !!state.loopAbilityUsed[k];
+  return false;
+}
+
+function markAbilityUsed(charId, ability) {
+  const k = getAbilityKey(charId, ability);
+  if (ability.freq === 'day') state.dailyAbilityUsed[k] = true;
+  if (ability.freq === 'loop') state.loopAbilityUsed[k] = true;
+}
+
+function isAbilityActivatable(c, ability) {
+  if (c.dead) return false;
+  if (c.friendly < ability.threshold) return false;
+  if (isAbilityUsed(c.id, ability)) return false;
+  if (ability.check && !ability.check(state, c)) return false;
+  return true;
+}
+
+function tryUseAbility(charId, abilIdx) {
+  const c = state.characters.find(x => x.id === charId);
+  const ability = CHAR_ABILITIES[c.name][abilIdx];
+  if (!isAbilityActivatable(c, ability)) return;
+  // 需選目標的能力（不論是否 customFlow）→ 走目標選擇流程；否則直接 resolveFriendlyAbility
+  // customFlow 在 applyFriendlyAbility 才被觸發，先讓 resolveFriendlyAbility 檢查 無視友好/絕對無視友好
+  if (ability.needsTarget) {
+    state.pendingChoice = { type: 'friendlyTarget', charId, abilIdx };
+    render();
+    return;
+  }
+  resolveFriendlyAbility(charId, abilIdx, null);
+}
+
+// 情報商 友好5 流程
+function informantDeclare(ruleName) {
+  if (!state.pendingChoice || state.pendingChoice.type !== 'informantReveal') return;
+  state.pendingChoice.declaredRule = ruleName;
+  state.pendingChoice.step = 2;
+  render();
+}
+function informantReveal(whichRule) { // 'X1' 或 'X2'
+  if (!state.pendingChoice || state.pendingChoice.type !== 'informantReveal') return;
+  const { charId, abilIdx, declaredRule } = state.pendingChoice;
+  const ruleName = state.script[whichRule];
+  // 規則名稱不可等於玩家聲明的；已公開的也不能再選
+  if (ruleName === declaredRule) return;
+  if ((state.revealedXRules || {})[whichRule]) return;
+  state.revealedXRules = state.revealedXRules || {};
+  state.revealedXRules[whichRule] = true;
+  const c = state.characters.find(x => x.id === charId);
+  const ability = CHAR_ABILITIES[c.name][abilIdx];
+  markAbilityUsed(charId, ability);
+  const msg = `情報商：劇作家公開規則 ${whichRule} 為「${ruleName}」`;
+  state.friendlyLog.push(msg);
+  addAnnouncement('friendly', msg);
+  finishFriendlyAbility(c, ability);
+}
+function informantBackStep() {
+  if (!state.pendingChoice || state.pendingChoice.type !== 'informantReveal') return;
+  if (state.pendingChoice.step === 2) {
+    state.pendingChoice.step = 1;
+    state.pendingChoice.declaredRule = null;
+    render();
+  }
+}
+
+// 鑑別員 友好2 多步驟流程
+function forensicSelectSource(srcId) {
+  if (!state.pendingChoice || state.pendingChoice.type !== 'forensicMove') return;
+  state.pendingChoice.sourceId = srcId;
+  state.pendingChoice.step = 2;
+  render();
+}
+function forensicSelectMarker(markerType) {
+  if (!state.pendingChoice || state.pendingChoice.type !== 'forensicMove') return;
+  state.pendingChoice.markerType = markerType;
+  state.pendingChoice.step = 3;
+  render();
+}
+function forensicBackStep() {
+  if (!state.pendingChoice || state.pendingChoice.type !== 'forensicMove') return;
+  if (state.pendingChoice.step === 2) {
+    state.pendingChoice.step = 1;
+    state.pendingChoice.sourceId = null;
+  } else if (state.pendingChoice.step === 3) {
+    state.pendingChoice.step = 2;
+    state.pendingChoice.markerType = null;
+  }
+  render();
+}
+function forensicSelectDest(destId) {
+  if (!state.pendingChoice || state.pendingChoice.type !== 'forensicMove') return;
+  const { charId, abilIdx, sourceId, markerType } = state.pendingChoice;
+  const c = state.characters.find(x => x.id === charId);
+  const ability = CHAR_ABILITIES[c.name][abilIdx];
+  const src = state.characters.find(x => x.id === sourceId);
+  const dst = state.characters.find(x => x.id === destId);
+  // 防護：確認來源仍有指示物
+  if (!src || !dst || src.dead || dst.dead) { state.pendingChoice = null; render(); return; }
+  if (src.position !== c.position || dst.position !== c.position) { state.pendingChoice = null; render(); return; }
+  if ((src[markerType] || 0) < 1) { state.pendingChoice = null; render(); return; }
+  src[markerType] = Math.max(0, src[markerType] - 1);
+  dst[markerType] = (dst[markerType] || 0) + 1;
+  markAbilityUsed(charId, ability);
+  const labelMap = { anxiety:'不安', conspiracy:'角色密謀', friendly:'友好' };
+  const msg = `${c.name}：${src.name} ${labelMap[markerType]} -1 → ${dst.name} +1`;
+  state.friendlyLog.push(msg);
+  addAnnouncement('friendly', msg);
+  finishFriendlyAbility(c, ability);
+}
+
+function parseTargetSpec(targetSpec) {
+  if (!targetSpec) return null;
+  const colonIdx = targetSpec.indexOf(':');
+  const kind = targetSpec.slice(0, colonIdx);
+  const idStr = targetSpec.slice(colonIdx + 1);
+  if (kind === 'char') return state.characters.find(x => x.id === Number(idStr));
+  if (kind === 'loc') return { kind:'loc', id: Number(idStr) };
+  if (kind === 'card') return { kind:'card', cardId: idStr };
+  if (kind === 'event') return { kind:'event', day: Number(idStr) };
+  return null;
+}
+
+function resolveFriendlyAbility(charId, abilIdx, targetSpec) {
+  const c = state.characters.find(x => x.id === charId);
+  const ability = CHAR_ABILITIES[c.name][abilIdx];
+  // 所有友好能力嘗試都先交給劇作家裁定，避免玩家從流程判斷是否有「無視友好」。
+  // normal：只能接受；ignore：可接受/拒絕；absolute：只能拒絕。
+  let decisionMode = 'normal';
+  if (hasTrait(c, '絕對無視友好')) decisionMode = 'absolute';
+  else if (hasTrait(c, '無視友好') && !ability.bypassReject) decisionMode = 'ignore';
+  state.pendingChoice = { type: 'masterRejectDecision', charId, abilIdx, targetSpec, decisionMode };
+  render();
+}
+
+function applyFriendlyAbility(charId, abilIdx, targetSpec) {
+  const c = state.characters.find(x => x.id === charId);
+  const ability = CHAR_ABILITIES[c.name][abilIdx];
+  // customFlow 在套用階段啟動（已通過 trait 檢查）
+  if (ability.customFlow === 'forensicMove') {
+    state.pendingChoice = { type: 'forensicMove', step: 1, charId, abilIdx, sourceId: null, markerType: null };
+    render();
+    return;
+  }
+  if (ability.customFlow === 'informantReveal') {
+    state.pendingChoice = { type: 'informantReveal', step: 1, charId, abilIdx, declaredRule: null };
+    render();
+    return;
+  }
+  const target = parseTargetSpec(targetSpec);
+  markAbilityUsed(charId, ability);
+  const beforeLen = state.friendlyLog.length;
+  ability.apply(state, c, target, state.friendlyLog);
+  const effectLines = state.friendlyLog.slice(beforeLen);
+  const effectText = effectLines.length ? ` → ${effectLines.join('、')}` : '';
+  addAnnouncement('friendly', `${c.name} 發動友好能力：${ability.desc}${effectText}`);
+  finishFriendlyAbility(c, ability);
+}
+
+function finishFriendlyAbility(c, ability) {
+  // 巫師：玩家可選擇是否公開身分並使 ex+1
+  if (c.role === '巫師') {
+    state.pendingChoice = { type: 'wizardChoice', charId: c.id };
+    render();
+    return;
+  }
+  state.pendingChoice = null;
+  render();
+}
+
+function wizardChoice(apply) {
+  if (!state.pendingChoice || state.pendingChoice.type !== 'wizardChoice') return;
+  const charId = state.pendingChoice.charId;
+  const c = state.characters.find(x => x.id === charId);
+  if (apply) {
+    state.revealedRoles = state.revealedRoles || {};
+    state.revealedRoles[c.id] = c.role;
+    const msg = `${c.name} 的身分為 ${c.role}（玩家選擇公開，ex+1）`;
+    state.friendlyLog.push(msg);
+    addAnnouncement('friendly', msg);
+    incrementEx(1);
+  } else {
+    const msg = `${c.name} 結算友好能力（玩家選擇不公開）`;
+    state.friendlyLog.push(msg);
+    addAnnouncement('friendly', msg);
+  }
+  state.pendingChoice = null;
+  render();
+}
+
+function isTerminalPhase() {
+  return state.phase === 'guess' || state.phase === 'gameover';
+}
+
+function masterAllowFriendly() {
+  if (!state.pendingChoice || state.pendingChoice.type !== 'masterRejectDecision') return;
+  if (state.pendingChoice.decisionMode === 'absolute') return; // 絕對無視友好只能拒絕
+  const { charId, abilIdx, targetSpec } = state.pendingChoice;
+  applyFriendlyAbility(charId, abilIdx, targetSpec);
+}
+
+function masterDenyFriendly() {
+  if (!state.pendingChoice || state.pendingChoice.type !== 'masterRejectDecision') return;
+  if (state.pendingChoice.decisionMode === 'normal') return; // 一般角色只能接受
+  const { charId, abilIdx } = state.pendingChoice;
+  const c = state.characters.find(x => x.id === charId);
+  const ability = CHAR_ABILITIES[c.name][abilIdx];
+  markAbilityUsed(charId, ability);
+  const msg = `${c.name} 嘗試發動友好能力，但遭劇作家拒絕而無效（ex+1）`;
+  state.friendlyLog.push(msg);
+  addAnnouncement('friendly', msg);
+  incrementEx(1);
+  state.pendingChoice = null;
+  render();
+}
+
+function getFriendlyTargetCandidates(charId, abilIdx) {
+  const c = state.characters.find(x => x.id === charId);
+  const ability = CHAR_ABILITIES[c.name][abilIdx];
+  // 回傳 [{kind, id, label}]
+  if (ability.needsTarget === 'sameAreaChar') {
+    return state.characters.filter(x => x.position===c.position && x.id!==c.id && !x.dead)
+      .map(x => ({ kind:'char', id:x.id, label:x.name }));
+  }
+  if (ability.needsTarget === 'sameAreaStudentAnxiety') {
+    return state.characters.filter(x => x.position===c.position && x.id!==c.id && !x.dead && hasTrait(x,'學生') && x.anxiety>=1)
+      .map(x => ({ kind:'char', id:x.id, label:x.name }));
+  }
+  if (ability.needsTarget === 'sameAreaDeadChar') {
+    return state.characters.filter(x => x.position===c.position && x.dead)
+      .map(x => ({ kind:'char', id:x.id, label:x.name+'(死)' }));
+  }
+  if (ability.needsTarget === 'sameAreaCharWithAnxiety') {
+    return state.characters.filter(x => x.position===c.position && x.id!==c.id && !x.dead && x.anxiety>=1)
+      .map(x => ({ kind:'char', id:x.id, label:x.name }));
+  }
+  if (ability.needsTarget === 'sameAreaCharWithConspiracy') {
+    return state.characters.filter(x => x.position===c.position && x.id!==c.id && !x.dead && x.conspiracy>=1)
+      .map(x => ({ kind:'char', id:x.id, label:x.name }));
+  }
+  if (ability.needsTarget === 'sameAreaCharOrLocConspiracy') {
+    const out = state.characters.filter(x => x.position===c.position && x.id!==c.id && !x.dead && x.conspiracy>=1)
+      .map(x => ({ kind:'char', id:x.id, label:x.name+' (角色密謀)' }));
+    const loc = state.locations.find(l => l.id === c.position);
+    if (loc.conspiracy >= 1) out.push({ kind:'loc', id:loc.id, label:loc.name+' (地點密謀)' });
+    return out;
+  }
+  if (ability.needsTarget === 'usedOncePlayerCard') {
+    return Object.entries(state.pUsedOnceCount || {})
+      .filter(([_, v]) => v >= 1)
+      .map(([cardId]) => {
+        const card = PLAYER_CARDS.find(cc => cc.id === cardId);
+        return { kind:'card', id:cardId, label:card.name };
+      });
+  }
+  if (ability.needsTarget === 'event') {
+    return state.script.events
+      .filter(e => !(state.revealedEventTargets && state.revealedEventTargets[e.day]))
+      .map(e => ({ kind:'event', id:e.day, label:`第 ${e.day} 天 ${e.event}` }));
+  }
+  if (ability.needsTarget === 'sameAreaStudentNotSelf') {
+    return state.characters.filter(x => x.position===c.position && x.id!==c.id && !x.dead && hasTrait(x,'學生'))
+      .map(x => ({ kind:'char', id:x.id, label:x.name }));
+  }
+  if (ability.needsTarget === 'sameAreaStudentNotSelfWithAnxiety') {
+    return state.characters.filter(x => x.position===c.position && x.id!==c.id && !x.dead && hasTrait(x,'學生') && x.anxiety>=1)
+      .map(x => ({ kind:'char', id:x.id, label:x.name }));
+  }
+  if (ability.needsTarget === 'anyOtherChar') {
+    return state.characters.filter(x => x.id!==c.id && !x.dead)
+      .map(x => ({ kind:'char', id:x.id, label:x.name }));
+  }
+  if (ability.needsTarget === 'anyDeadChar') {
+    return state.characters.filter(x => x.dead)
+      .map(x => ({ kind:'char', id:x.id, label:x.name+'(屍)' }));
+  }
+  if (ability.needsTarget === 'triggeredEvent') {
+    const triggeredDays = new Set();
+    for (const entry of state.log) {
+      // 只取本輪觸發的事件（刑警友好4 限本輪）
+      if (entry.kind === 'event' && entry.triggered && entry.loop === state.loop) triggeredDays.add(entry.day);
+    }
+    return state.script.events
+      .filter(e => triggeredDays.has(e.day) && !(state.revealedEventTargets && state.revealedEventTargets[e.day]))
+      .map(e => ({ kind:'event', id:e.day, label:`第 ${e.day} 天 ${e.event}` }));
+  }
+  if (ability.needsTarget === 'sameAreaCharOverAnxiety') {
+    return state.characters.filter(x => x.position===c.position && x.id!==c.id && !x.dead && x.anxiety>=x.anxietyLimit)
+      .map(x => ({ kind:'char', id:x.id, label:x.name }));
+  }
+  if (ability.needsTarget === 'sameAreaCharNotSelf') {
+    return state.characters.filter(x => x.position===c.position && x.id!==c.id && !x.dead)
+      .map(x => ({ kind:'char', id:x.id, label:x.name }));
+  }
+  if (ability.needsTarget === 'sameAreaCharNotSelfWithAnxiety') {
+    return state.characters.filter(x => x.position===c.position && x.id!==c.id && !x.dead && x.anxiety>=1)
+      .map(x => ({ kind:'char', id:x.id, label:x.name }));
+  }
+  if (ability.needsTarget === 'sameAreaCharOrLocPlace') {
+    // 任意（含自己）+ 該位置
+    const out = state.characters.filter(x => x.position===c.position && !x.dead)
+      .map(x => ({ kind:'char', id:x.id, label:x.name + (x.id===c.id?' (自己)':'') + ' (角色密謀)' }));
+    const loc = state.locations.find(l => l.id === c.position);
+    out.push({ kind:'loc', id:loc.id, label:loc.name+' (地點密謀)' });
+    return out;
+  }
+  if (ability.needsTarget === 'sameAreaCharOrLocPlaceNotSelf') {
+    // 排除自己 + 該位置
+    const out = state.characters.filter(x => x.position===c.position && x.id!==c.id && !x.dead)
+      .map(x => ({ kind:'char', id:x.id, label:x.name + ' (角色密謀)' }));
+    const loc = state.locations.find(l => l.id === c.position);
+    out.push({ kind:'loc', id:loc.id, label:loc.name+' (地點密謀)' });
+    return out;
+  }
+  if (ability.needsTarget === 'sameAreaCharIncSelf') {
+    return state.characters.filter(x => x.position===c.position && !x.dead)
+      .map(x => ({ kind:'char', id:x.id, label:x.name + (x.id===c.id?' (自己)':'') }));
+  }
+  return [];
+}
+
+function cancelFriendlyTarget() {
+  state.pendingChoice = null;
+  render();
+}
+
+function endFriendlyPhase() {
+  // 將友好紀錄寫入歷程
+  if (state.friendlyLog.length > 0) {
+    state.log.unshift({ day: state.day, loop: state.loop, kind: 'friendly', log: [...state.friendlyLog] });
+  }
+  startEventPhase();
+}
+
+function startEventPhase() {
+  // 先進入 event phase；若今天沒有事件，finishDay() 仍會被視為合法的事件階段推進。
+  state.phase = 'event';
+  const event = todayEvent();
+  if (!event) {
+    finishDay();
+    return;
+  }
+  const trig = checkEventTrigger(event);
+  const log = [];
+  state.eventOutcome = {
+    event: event.event,
+    target: event.target,
+    triggered: trig.triggered,
+    reason: trig.reason,
+    log,
+  };
+  if (trig.triggered) {
+    const r = executeEvent(event, log);
+    state.phase = 'event';
+    if (r.needsChoice) {
+      // 等待選擇
+    }
+  } else {
+    // 觸發判定值與上限為機密，不寫入公開紀錄
+    state.phase = 'event';
+  }
+  // 紀錄
+  state.log.unshift({ day: state.day, loop: state.loop, kind: 'event', event: event.event, target: event.target, triggered: trig.triggered, log: [...log] });
+  render();
+}
+
+// 完成事件選擇
+function resolveMastermindKill(targetId) {
+  const c = state.characters.find(c => c.id === targetId);
+  const log = state.pendingChoice.eventLog;
+  // 不公開劇作家選了誰；若是不死則靜默失敗
+  killCharacter(c, log);
+  state.log[0].log = [...log];
+  state.pendingChoice = null;
+  render();
+}
+
+function resolveUnease(step, targetId) {
+  const c = state.characters.find(c => c.id === targetId);
+  const log = state.pendingChoice.eventLog;
+  if (state.pendingChoice.step === 1) {
+    c.anxiety += 1;
+    log.push(`${c.name} 不安 +1`);
+    state.pendingChoice.step = 2;
+    state.log[0].log = [...log];
+    render();
+  } else {
+    c.conspiracy += 1;
+    log.push(`${c.name} 角色密謀 +1`);
+    state.log[0].log = [...log];
+    state.pendingChoice = null;
+    render();
+  }
+}
+
+function resolvePlayerKill(targetId) {
+  const c = state.characters.find(c => c.id === targetId);
+  const log = state.pendingChoice.eventLog;
+  log.push(`玩家選擇 ${c.name} 死亡`);
+  killCharacter(c, log);
+  state.log[0].log = [...log];
+  state.pendingChoice = null;
+  render();
+}
+
+// =========================================
+// 結束本日 / 本輪 / 全部
+// =========================================
+function finishDay() {
+  // 防止線上雙擊、舊畫面殘留按鈕、或重複封包導致同一天被結算兩次。
+  if (state.phase !== 'event') return;
+  const dayEndLog = [];
+  // 目擊者：回合結束時若不安≥4 則死亡並 ex+1
+  for (const c of state.characters) {
+    if (c.role === '目擊者' && !c.dead && !c.offBoard && c.anxiety >= 4) {
+      killCharacter(c, dayEndLog);
+      incrementEx(1);
+    }
+  }
+  // 殺人狂：所有殺人狂同時判定，避免「先殺先贏」順序問題
+  const killerTargets = new Set();
+  for (const c of state.characters) {
+    if (c.role === '殺人狂' && !c.dead && !c.offBoard) {
+      const sameArea = state.characters.filter(x => x.position === c.position && x.id !== c.id && !x.dead && !x.offBoard);
+      if (sameArea.length === 1) killerTargets.add(sameArea[0].id);
+    }
+  }
+  if (killerTargets.size > 0) {
+    dayEndLog.push(`殺人狂 強制能力觸發`);
+    for (const id of killerTargets) {
+      const t = state.characters.find(x => x.id === id);
+      if (t) killCharacter(t, dayEndLog);
+    }
+  }
+  if (dayEndLog.length > 0) {
+    state.log.unshift({ day: state.day, loop: state.loop, kind: 'dayend', log: dayEndLog });
+    addAnnouncement('forced', publicForcedAbilityText(dayEndLog));
+  }
+  // ex≥4 強制結束保險
+  if (isTerminalPhase()) { render(); return; }
+
+  // 中途已輸 → 立刻結束本輪，跳過剩餘天數
+  if (state.loopResult === 'lose') {
+    state.pastLoops.push({ loop: state.loop, result: 'lose', reason: state.loopReason });
+    state.phase = 'loopEnd';
+    render();
+    return;
+  }
+  if (state.day >= state.script.daysPerLoop) {
+    // 最後一天 → 檢查時間旅者 / 巫師 輪結束條件
+    for (const c of state.characters) {
+      if (c.role === '時間旅者' && !c.dead && c.friendly < 3) {
+        loseLoop(`時間旅者 ${c.name} 輪結束時友好不足3`);
+      }
+      if (c.role === '巫師' && c.dead) {
+        loseLoop(`巫師 ${c.name} 輪結束時處於死亡狀態`);
+      }
+    }
+    // Y 規則失敗條件
+    checkYRuleFailure();
+    if (!state.loopResult) {
+      state.loopResult = 'win';
+      state.loopReason = `完成本輪 ${state.script.daysPerLoop} 天且未觸發失敗條件`;
+    }
+    state.pastLoops.push({ loop: state.loop, result: state.loopResult, reason: state.loopReason });
+    state.phase = 'loopEnd';
+    render();
+  } else {
+    // 進入下一天
+    state.day += 1;
+    state.mPlays = [];
+    state.pPlays = [];
+    state.selectedCard = null;
+    state.eventOutcome = null;
+    state.dailyAbilityUsed = {}; // 每日能力重置
+    state.friendlyLog = [];
+    // 轉校生 出場日抵達時上場
+    const arrivalLog = [];
+    for (const c of state.characters) {
+      if (c.offBoard && c.appearanceDay && state.day >= c.appearanceDay && !c.dead) {
+        c.offBoard = false;
+        c.position = CHAR_DEFS[c.name].initPos;
+        arrivalLog.push(`${c.name} 登場（位置：${quadName(c.position)}）`);
+      }
+    }
+    if (arrivalLog.length > 0) {
+      state.log.unshift({ day: state.day, loop: state.loop, kind: 'arrival', log: arrivalLog });
+    }
+    syncOffBoard();
+    state.phase = 'switch';
+    state.nextRoleLabel = '劇作家';
+    state.nextPhase = 'mastermind';
+    render();
+  }
+}
+
+function continueAfterLoop() {
+  // 防止線上雙擊或重複封包使 loop 被推進兩次。
+  if (state.phase !== 'loopEnd') return;
+  // 玩家勝利條件1：任一輪 win 即遊戲勝
+  const winLoop = state.pastLoops.find(l => l.result === 'win');
+  if (winLoop) {
+    state.overallResult = 'win';
+    state.overallReason = `第 ${winLoop.loop} 輪存活完整 ${state.script.daysPerLoop} 天，玩家勝利`;
+    state.phase = 'gameover';
+    render();
+    return;
+  }
+  if (state.loop >= state.script.loops) {
+    // 所有輪皆失敗 → 進入猜身分階段（最後一搏）
+    state.phase = 'guess';
+    state.guesses = {};
+    render();
+    return;
+  }
+  state.loop += 1;
+  resetLoop();
+  // ex 槽 ≥ 1：輪開始選擇一名角色 +2 友好
+  if (state.ex >= 1) {
+    state.phase = 'exFriendly';
+  } else {
+    state.phase = 'switch';
+    state.nextRoleLabel = '劇作家';
+    state.nextPhase = 'mastermind';
+  }
+  render();
+}
+
+function applyExFriendly(charId) {
+  const c = state.characters.find(x => x.id === charId);
+  c.friendly += 2;
+  state.log.unshift({ day: state.day, loop: state.loop, kind: 'exFriendly', log: [`(ex 槽 ≥1) ${c.name} 友好 +2`] });
+  state.phase = 'switch';
+  state.nextRoleLabel = '劇作家';
+  state.nextPhase = 'mastermind';
+  render();
+}
+
+function submitGuess() {
+  let correct = 0;
+  const total = state.characters.length;
+  const detail = [];
+  for (const c of state.characters) {
+    const guess = state.guesses[c.id];
+    const isCorrect = guess === c.role;
+    if (isCorrect) correct++;
+    detail.push({ name: c.name, role: c.role, guess, correct: isCorrect });
+  }
+  state.guessDetail = detail;
+  state.guessCorrect = correct;
+  state.guessTotal = total;
+  if (correct === total) {
+    state.overallResult = 'win';
+    state.overallReason = `猜對所有 ${total} 位角色身分，玩家勝利`;
+  } else {
+    state.overallResult = 'lose';
+    state.overallReason = `僅猜對 ${correct}/${total} 位，劇作家勝利`;
+  }
+  state.phase = 'gameover';
+  render();
+}
+
+function setGuess(charId, role) {
+  state.guesses[charId] = role;
+  render();
+}
+
+// =========================================
+// 渲染
+// =========================================
+function render() {
+  const app = document.getElementById('app');
+  // 線上 lobby
+  if (!state && Net.status !== 'idle') {
+    app.innerHTML = renderLobby();
+    return;
+  }
+  if (!state) {
+    app.innerHTML = renderModeChoice();
+    return;
+  }
+  // netWaiting：等待對手
+  if (state.phase === 'netWaiting') {
+    app.innerHTML = renderHeader() + renderRuleBanner() + renderCalendar() + renderNetWaiting();
+    return;
+  }
+  // 自己不是當前階段的操作角色 → 顯示等待
+  if (Net.enabled && state.phase !== 'switch') {
+    const r = Net.expectedRole(state.phase);
+    if (r && r !== Net.role) {
+      app.innerHTML = renderHeader() + renderRuleBanner() + renderCalendar() + renderNetWaiting(r);
+      return;
+    }
+  }
+  // 'switch' 在網路模式下自動進入下一階段（因為各端只看自己的）
+  if (state.phase === 'switch' && Net.enabled) {
+    confirmHandoff();
+    return;
+  }
+  if (state.phase === 'switch') {
+    app.innerHTML = renderHeader() + renderRuleBanner() + renderCalendar() + `
+      <div class="overlay">
+        <div class="overlay-content">
+          <h2>${state.nextRoleLabel} 回合</h2>
+          <p>請將設備交給 ${state.nextRoleLabel}，準備好後點擊下方按鈕。</p>
+          <button class="primary" style="width:auto; padding:10px 24px;" onclick="confirmHandoff()">我已準備好</button>
+        </div>
+      </div>`;
+    return;
+  }
+  if (state.phase === 'gameover') {
+    app.innerHTML = renderHeader() + renderRuleBanner() + renderCalendar() + renderGameOver();
+    return;
+  }
+  if (state.phase === 'guess') {
+    app.innerHTML = renderHeader() + renderRuleBanner() + renderCalendar() + renderGuessPhase();
+    return;
+  }
+  if (state.phase === 'exFriendly') {
+    app.innerHTML = renderHeader() + renderRuleBanner() + renderCalendar() + renderExFriendly();
+    return;
+  }
+  if (state.phase === 'masterPickInit') {
+    app.innerHTML = renderHeader() + renderRuleBanner() + renderCalendar() + renderMasterPickInit();
+    return;
+  }
+  if (state.phase === 'loopEnd') {
+    app.innerHTML = renderHeader() + renderRuleBanner() + renderCalendar() + renderLoopEnd();
+    return;
+  }
+  let mainContent = `<div class="main-grid">${renderMap()}${renderSidePanel()}</div>`;
+  let modal = pendingConfirm ? renderConfirmModal() : '';
+  app.innerHTML = renderHeader() + renderRuleBanner() + renderCalendar() + mainContent + modal;
+}
+
+function renderModeChoice() {
+  return `
+    <div class="overlay">
+      <div class="modal">
+        <h2>慘劇 Tragedy</h2>
+        <p>選擇遊玩模式：</p>
+        <div class="modal-actions" style="flex-direction:column; gap:10px;">
+          <button class="confirm" onclick="chooseOffline()">本機對戰（同台輪流）</button>
+          <button class="confirm" onclick="chooseOnlineCreate()">建立線上房間（劇作家）</button>
+          <button class="confirm" onclick="chooseOnlineJoin()">加入線上房間（玩家）</button>
+        </div>
+        <div style="font-size:11px; color:#888; margin-top:14px;">
+          線上模式需先啟動 server.js（執行 <code>node server.js</code>）並透過 http://localhost:8765 開啟。
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderLobby() {
+  let html = `<div class="overlay"><div class="modal">
+    <h2>線上房間</h2>`;
+  if (Net.status === 'connecting') {
+    html += `<p>連線中…</p>`;
+  } else if (Net.status === 'waiting') {
+    html += `<p>已建立房間。請告知對手以下房間代碼：</p>
+      <div style="font-size:32px; font-weight:bold; color:#f0c674; text-align:center; padding:12px; background:#1a1a2e; border-radius:8px; letter-spacing:4px;">${Net.code}</div>
+      <p style="font-size:12px; color:#a0a0c0; margin-top:8px;">你的角色：<b>劇作家</b>　等待玩家加入…</p>`;
+  } else if (Net.status === 'paired') {
+    html += `<p>已配對！房間：<b>${Net.code}</b>　角色：<b>${Net.role === 'mastermind' ? '劇作家' : '玩家'}</b></p>`;
+    if (Net.role === 'mastermind') {
+      html += `
+        <p>劇作家請設定劇本，按下「開始遊戲」後玩家也會收到。</p>
+        <textarea id="scriptInput">${SCRIPT_DEFAULT_TEXT}</textarea>
+        <div id="setupErr" style="color:#ff8888; font-size:12px; margin-top:6px;"></div>
+        <div class="modal-actions">
+          <button class="confirm" onclick="startGame()">開始遊戲</button>
+        </div>`;
+    } else {
+      html += `<p>等待劇作家設定劇本並開始遊戲…</p>`;
+    }
+  } else if (Net.status === 'err') {
+    html += `<p style="color:#ff6666;">連線發生錯誤。</p>
+      <button class="confirm" onclick="location.reload()">重新整理</button>`;
+  }
+  html += `</div></div>`;
+  return html;
+}
+
+function renderNetWaiting(role) {
+  const target = role || (Net.role === 'mastermind' ? 'player' : 'mastermind');
+  const targetLabel = target === 'mastermind' ? '劇作家' : '玩家';
+  return `
+    <div class="overlay">
+      <div class="overlay-content">
+        <h2>等待 ${targetLabel} 操作</h2>
+        <p>當前階段：${state.phase}</p>
+        <p style="font-size:12px; color:#a0a0c0;">畫面會在對手完成後自動切換。</p>
+      </div>
+    </div>`;
+}
+
+function chooseOffline() {
+  Net.enabled = false;
+  // 顯示原本的 setup 畫面
+  document.getElementById('app').innerHTML = renderOldSetup();
+}
+
+function chooseOnlineCreate() {
+  Net.status = 'connecting';
+  render();
+  Net.connect('create').catch(e => { Net.status = 'err'; render(); });
+}
+
+function chooseOnlineJoin() {
+  const code = (prompt('請輸入房間代碼：') || '').trim().toUpperCase();
+  if (!code) return;
+  Net.status = 'connecting';
+  render();
+  Net.connect('join', code).catch(e => { Net.status = 'err'; render(); });
+}
+
+function renderOldSetup() {
+  return `
+    <div class="overlay">
+      <div class="modal">
+        <h2>慘劇 Tragedy — 劇本設定</h2>
+        <p>下方為預設劇本。可直接「開始遊戲」或修改後再開始。</p>
+        <textarea id="scriptInput">${SCRIPT_DEFAULT_TEXT}</textarea>
+        <div id="setupErr" style="color:#ff8888; font-size:12px; margin-top:6px;"></div>
+        <div class="modal-actions">
+          <button class="cancel" onclick="document.getElementById('scriptInput').value = ${JSON.stringify(SCRIPT_DEFAULT_TEXT).replace(/"/g, '&quot;')}">還原預設</button>
+          <button class="confirm" onclick="startGame()">開始遊戲</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderSetup() {
+  return renderOldSetup();
+}
+
+function renderHeader() {
+  let role = '';
+  if (state.phase === 'mastermind') role = `<span class="role-banner mastermind">劇作家回合</span>`;
+  else if (state.phase === 'player')     role = `<span class="role-banner player">玩家回合</span>`;
+  else if (state.phase === 'resolve')    role = `<span class="role-banner resolve">出牌結算</span>`;
+  else if (state.phase === 'event')      role = `<span class="role-banner event">事件結算</span>`;
+  else if (state.phase === 'loopEnd')    role = `<span class="role-banner ${state.loopResult==='win'?'resolve':'mastermind'}">輪 ${state.loop} 結束</span>`;
+  else if (state.phase === 'gameover')   role = `<span class="role-banner resolve">遊戲結束</span>`;
+  const titleSuffix = state.script && state.script.name ? `　【${state.script.name}】` : '';
+  return `
+    <header>
+      <h1>慘劇 Tragedy${titleSuffix}</h1>
+      <div class="day-info">第 ${state.day} 天 / ${state.script.daysPerLoop} 天　·　第 ${state.loop} 輪 / ${state.script.loops} 輪　·　ex 槽 ${state.ex || 0}</div>
+      ${role}
+    </header>`;
+}
+
+function renderRuleBanner() {
+  if (!state.script || !state.script.Y1) return '';
+  const isMaster = state.phase === 'mastermind';
+  const isOver = state.phase === 'gameover';
+  const revealed = state.revealedXRules || {};
+  const items = [];
+  const revealedY = state.revealedYRules || {};
+  // Y1 — 預設對玩家隱藏（劇作家可見，遊戲結束公開，被公開時可見）
+  items.push({ label: 'Y1', value: state.script.Y1, visible: isMaster || isOver || revealedY.Y1 });
+  // Y2 — 劇作家可見，或當瘋狂的真相啟動且當前 ex≥2 時公開
+  if (state.script.Y2) {
+    const isMadTruthOn = (state.script.X1 === '瘋狂的真相' || state.script.X2 === '瘋狂的真相') && state.ex >= 2;
+    items.push({ label: 'Y2', value: state.script.Y2, visible: isMaster || isOver || revealedY.Y2 || isMadTruthOn });
+  }
+  // X1 — 劇作家可見，或 ex≥2，或被情報商公開
+  items.push({ label: 'X1', value: state.script.X1, visible: isMaster || isOver || state.ex >= 2 || revealed.X1 });
+  // X2 — 劇作家可見，或被情報商公開
+  items.push({ label: 'X2', value: state.script.X2, visible: isMaster || isOver || revealed.X2 });
+
+  let html = '<div class="calendar" style="background:#2a2a48;">';
+  for (const it of items) {
+    const txt = it.visible ? `${it.label}：${it.value}` : `${it.label}：？`;
+    html += `<div class="cal-day" style="text-align:center; flex:1;">
+      <div class="ev-name" style="color:${it.visible?'#f0c674':'#888'}; font-weight:bold;">${txt}</div>
+    </div>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderCalendar() {
+  const showCulprit = (state.phase === 'mastermind'); // 劇作家階段顯示
+  const revealed = state.revealedEventTargets || {};
+  let html = '<div class="calendar">';
+  for (let d = 1; d <= state.script.daysPerLoop; d++) {
+    const ev = state.script.events.find(e => e.day === d);
+    const cur = d === state.day ? ' current' : '';
+    html += `<div class="cal-day${cur}"><div class="day-num">第 ${d} 天</div>`;
+    if (ev) {
+      html += `<div class="ev-name">${ev.event}</div>`;
+      if (showCulprit) {
+        html += `<div class="ev-target">當事人：${ev.target}</div>`;
+      } else if (revealed[d]) {
+        html += `<div class="ev-target">當事人：${revealed[d]} (已公開)</div>`;
+      }
+    } else {
+      html += `<div style="color:#666;">—</div>`;
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+// 取得某目標應該顯示的籌碼
+function getDisplayChipsAt(target) {
+  const out = [];
+  if (state.phase === 'mastermind') {
+    state.mPlays.forEach(p => {
+      if (targetEqual(p.target, target)) {
+        out.push({ side:'m', name: getCard('m', p.cardId).name, removable: true });
+      }
+    });
+  } else if (state.phase === 'player') {
+    state.pPlays.forEach(p => {
+      if (targetEqual(p.target, target)) {
+        out.push({ side:'p', name: getCard('p', p.cardId).name, removable: true });
+      }
+    });
+    state.mPlays.forEach(p => {
+      if (targetEqual(p.target, target)) {
+        out.push({ side:'m', name: '劇作家 ?', hidden: true });
+      }
+    });
+  } else if (state.phase === 'resolve' || state.phase === 'event') {
+    const log = state.log.find(l => l.kind === 'cards' && l.day === state.day);
+    if (log) {
+      const group = log.groups.find(g => targetEqual(g.target, target));
+      if (group) {
+        group.plays.forEach((p, idx) => {
+          out.push({
+            side: p.side,
+            name: p.card.name + (p.side==='m' ? '（劇）' : '（玩）'),
+            cancelled: group.cancelled.includes(idx),
+          });
+        });
+      }
+    }
+  }
+  return out;
+}
+
+function isSelectableTarget(target) {
+  if (!state.selectedCard) return false;
+  if (state.phase !== 'mastermind' && state.phase !== 'player') return false;
+  const plays = state.phase === 'mastermind' ? state.mPlays : state.pPlays;
+  if (plays.length >= 3) return false;
+  if (plays.some(p => targetEqual(p.target, target))) return false;
+  // 死亡或尚未登場的角色不可被選
+  if (target.type === 'char') {
+    const c = state.characters.find(c => c.id === target.id);
+    if (c && (c.dead || c.offBoard)) return false;
+  }
+  return true;
+}
+
+function renderMap() {
+  // 第二象限 / 第一象限
+  // 第三象限 / 第四象限
+  const order = [2, 1, 3, 4];
+  let html = '<div class="map">';
+  for (const q of order) html += renderLocation(q);
+  html += '</div>';
+  return html;
+}
+
+function renderLocation(qid) {
+  const loc = state.locations.find(l => l.id === qid);
+  const target = { type: 'loc', id: qid };
+  const sel = isSelectableTarget(target);
+
+  let chips = '';
+  for (const ch of getDisplayChipsAt(target)) {
+    const sideCls = ch.side === 'm' ? 'mastermind' : 'player';
+    const extra = (ch.hidden?' hidden':'') + (ch.cancelled?' cancelled':'') + (ch.removable?' removable':'');
+    const click = ch.removable ? `onclick="event.stopPropagation(); removePlayByTarget('loc', ${qid})"` : '';
+    const suffix = ch.removable ? ' ✕' : '';
+    chips += `<span class="chip ${sideCls}${extra}" ${click}>${ch.name}${suffix}</span>`;
+  }
+
+  let html = `<div class="location loc-${qid}${sel?' selectable':''}" onclick="onClickTarget('loc', ${qid})">
+    <div class="location-header">
+      <span class="location-name">${loc.name}</span>
+      ${showPrivateStats() ? `<span class="conspiracy">密謀 ${loc.conspiracy}</span>` : ''}
+    </div>
+    <div class="chip-row">${chips}</div>
+    <div class="character-list">`;
+
+  // 顯示在場上的（活著或死亡）；尚未登場（offBoard）的不顯示
+  const here = state.characters.filter(c => c.position === qid && !c.offBoard);
+  for (const c of here) {
+    const ctarget = { type: 'char', id: c.id };
+    const csel = isSelectableTarget(ctarget);
+    const overAnx = !c.dead && c.anxiety >= c.anxietyLimit && showPrivateStats() ? ' over-anxiety' : '';
+    const dead = c.dead ? ' dead' : '';
+    let ccChips = '';
+    if (!c.dead) {
+      for (const ch of getDisplayChipsAt(ctarget)) {
+        const sideCls = ch.side === 'm' ? 'mastermind' : 'player';
+        const extra = (ch.hidden?' hidden':'') + (ch.cancelled?' cancelled':'') + (ch.removable?' removable':'');
+        const click = ch.removable ? `onclick="event.stopPropagation(); removePlayByTarget('char', ${c.id})"` : '';
+        const suffix = ch.removable ? ' ✕' : '';
+        ccChips += `<span class="chip ${sideCls}${extra}" ${click}>${ch.name}${suffix}</span>`;
+      }
+    }
+    html += `<div class="character${csel?' selectable':''}${overAnx}${dead}"
+      onclick="event.stopPropagation(); ${c.dead?'':'onClickTarget'}('char', ${c.id})">
+      <div class="char-row">
+        <span class="char-name">${c.name}</span>
+        <span class="char-stats">
+          ${c.dead ? '已死亡' : `
+            ${showPrivateStats() ? `<span class="stat-anxiety">不安 ${c.anxiety}/${c.anxietyLimit}</span>` : ''}
+            <span class="stat-friendly">友好 ${c.friendly}</span>
+            ${showPrivateStats() && c.conspiracy>0 ? `<span class="stat-cons">密 ${c.conspiracy}</span>` : ''}
+          `}
+        </span>
+      </div>
+      ${ccChips ? `<div class="char-chips">${ccChips}</div>` : ''}
+    </div>`;
+  }
+  html += '</div></div>';
+  return html;
+}
+
+function renderSidePanel() {
+  let html = '<div class="side-panel">';
+  // 劇作家機密面板（只在劇作家階段）
+  if (state.phase === 'mastermind') {
+    html += renderSecretPanel();
+  }
+  html += renderAnnouncementPanel();
+  if (state.phase === 'mastermind' || state.phase === 'player') {
+    html += renderCardPanel();
+    html += renderPlaysPanel();
+  } else if (state.phase === 'resolve') {
+    html += `<div class="panel resolve-flex"><h3>第 ${state.day} 天 出牌結算</h3>
+      <div class="resolve-area">${renderResolveDetails()}</div>
+      <button class="primary" onclick="startMasterAbilityPhase()">→ 劇作家任意能力</button>
+    </div>`;
+  } else if (state.phase === 'masterAbility') {
+    html += `<div class="panel resolve-flex"><h3>第 ${state.day} 天 劇作家任意能力</h3>
+      <div class="resolve-area">${renderMasterAbilityDetails()}</div>
+      ${state.pendingChoice ? '' : '<button class="primary" onclick="endMasterAbilityPhase()">→ 友好階段</button>'}
+    </div>`;
+  } else if (state.phase === 'friendly') {
+    html += `<div class="panel resolve-flex"><h3>第 ${state.day} 天 友好能力階段</h3>
+      <div class="resolve-area">${renderFriendlyDetails()}</div>
+      ${state.pendingChoice ? '' : '<button class="primary" onclick="endFriendlyPhase()">→ 事件結算</button>'}
+    </div>`;
+  } else if (state.phase === 'event') {
+    html += `<div class="panel resolve-flex"><h3>第 ${state.day} 天 事件結算</h3>
+      <div class="resolve-area">${renderEventDetails()}</div>
+      ${state.pendingChoice ? '' : `<button class="primary" onclick="finishDay()">${state.loopResult === 'lose' ? '結束本輪' : (state.day >= state.script.daysPerLoop ? '結束本輪' : `進入第 ${state.day+1} 天`)}</button>`}
+    </div>`;
+  }
+  html += `<div class="panel log-flex"><h3>歷程紀錄</h3><div class="log-panel">${renderLog()}</div></div>`;
+  html += '</div>';
+  return html;
+}
+
+function renderAnnouncementPanel() {
+  const items = state.announcementLog || [];
+  const collapsed = !!state.announcementCollapsed;
+  const latest = items[0];
+  let html = `<div class="panel ${collapsed?'collapsed':''}">
+    <h3 onclick="toggleAnnouncement()" style="cursor:pointer; user-select:none;">📣 能力公告 <span class="toggle-arrow" style="float:right; font-size:11px;">${collapsed?'▶ 展開':'▼ 收合'}</span></h3>`;
+  if (collapsed) {
+    const summary = latest ? `最近：第 ${latest.loop} 輪第 ${latest.day} 天｜${latest.label}` : '尚無能力公告';
+    html += `<div class="resolve-detail" style="color:#888; font-size:10px;">${summary}</div>`;
+    html += `</div>`;
+    return html;
+  }
+  if (items.length === 0) {
+    html += `<div class="resolve-detail" style="color:#888;">尚無能力公告。這裡會顯示剛剛發生的友好能力、劇作家任意能力與強制能力。</div>`;
+  } else {
+    html += `<div class="log-panel" style="max-height:150px;">`;
+    for (const it of items.slice(0, 8)) {
+      html += `<div class="log-entry" style="border-left-color:${it.kind==='friendly'?'#88ff88':(it.kind==='forced'?'#ff8888':'#f0c674')};">
+        <b>[第 ${it.loop} 輪 第 ${it.day} 天｜${it.label}]</b><br>${it.text}
+      </div>`;
+    }
+    html += `</div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function renderSecretPanel() {
+  const collapsed = state.secretCollapsed;
+  let html = `<div class="panel secret ${collapsed?'collapsed':'expanded'}">
+    <h3 onclick="toggleSecret()">🎭 劇作家機密（不要被玩家看到）<span class="toggle-arrow">${collapsed?'▶ 展開':'▼ 收合'}</span></h3>`;
+  if (!collapsed) {
+    html += `<div class="secret-body">
+      <div style="font-size:10px; color:#a0a0c0; margin-bottom:4px;">角色身分：</div>`;
+    for (const c of state.characters) {
+      html += `<div class="role-row">
+        <span class="name">${c.name}${c.dead?' (死)':''}</span>
+        <span class="role-name">${c.role}</span>
+      </div>`;
+    }
+    if (state.script.events.length > 0) {
+      html += `<div style="font-size:10px; color:#a0a0c0; margin:6px 0 4px;">事件當事人：</div>`;
+      for (const e of state.script.events) {
+        html += `<div class="role-row">
+          <span class="name">第 ${e.day} 天 ${e.event}</span>
+          <span class="role-name">${e.target}</span>
+        </div>`;
+      }
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function toggleSecret() {
+  state.secretCollapsed = !state.secretCollapsed;
+  render();
+}
+
+function renderCardPanel() {
+  const isM = state.phase === 'mastermind';
+  const cards = isM ? MASTERMIND_CARDS : PLAYER_CARDS;
+  const usedCount = isM ? state.mUsedOnceCount : state.pUsedOnceCount;
+  const plays = isM ? state.mPlays : state.pPlays;
+  const playCount = {};
+  for (const p of plays) playCount[p.cardId] = (playCount[p.cardId] || 0) + 1;
+
+  let html = `<div class="panel"><h3>${isM?'劇作家':'玩家'}手牌</h3>`;
+  if (state.selectedCard) {
+    const c = getCard(isM?'m':'p', state.selectedCard);
+    html += `<div class="selection-prompt warn">
+      <span>已選 <b>${c.name}</b>，請點選地圖目標</span>
+      <button class="secondary" onclick="clearSelection()">取消</button>
+    </div>`;
+  } else {
+    html += `<div class="selection-prompt">
+      <span>3 張，目標互不相同</span>
+      <span style="color:#f0c674;">已出 ${plays.length}/3</span>
+    </div>`;
+  }
+  html += '<div class="card-list">';
+  for (const c of cards) {
+    const playedToday = playCount[c.id] || 0;
+    const effCount = !isM ? getCardEffectiveCount(c) : c.count;
+    const usedPast = (usedCount[c.id] || 0);
+    let totalUsed, total;
+    if (c.once) {
+      total = effCount;
+      totalUsed = usedPast + playedToday;
+    } else {
+      total = effCount;
+      totalUsed = playedToday;
+    }
+    const remaining = total - totalUsed;
+    const disabled = remaining <= 0 || plays.length >= 3;
+    const selected = state.selectedCard === c.id;
+    let meta;
+    if (c.once) {
+      meta = `剩 ${remaining}/${total}・一次性`;
+      if (remaining <= 0) meta = '本輪已用完';
+    } else {
+      meta = `${total}張`;
+      if (playedToday > 0) meta = `已用 ${playedToday}/${total}`;
+      if (remaining <= 0) meta = '本日已出完';
+    }
+    html += `<div class="card${disabled?' disabled':''}${selected?' selected':''}${c.once?' once':''}"
+      onclick="${disabled?'':`selectCard('${c.id}')`}">
+      <div class="card-name">${c.name}</div>
+      <div class="card-meta">${meta}</div>
+    </div>`;
+  }
+  html += '</div></div>';
+  return html;
+}
+
+function renderPlaysPanel() {
+  const isM = state.phase === 'mastermind';
+  const plays = isM ? state.mPlays : state.pPlays;
+  let html = `<div class="panel"><h3>本日預備出牌 (${plays.length}/3)</h3><div class="plays-list">`;
+  for (let i = 0; i < 3; i++) {
+    if (plays[i]) {
+      const c = getCard(isM?'m':'p', plays[i].cardId);
+      const tName = targetName(plays[i].target);
+      html += `<div class="play-row">
+        <span><b>${c.name}</b> → ${tName}</span>
+        <button class="play-remove" onclick="removePlay(${i})">移除</button>
+      </div>`;
+    } else {
+      html += `<div class="play-row empty">（第 ${i+1} 張尚未出）</div>`;
+    }
+  }
+  html += '</div>';
+  html += `<button class="primary" ${plays.length===3?'':'disabled'} onclick="askSubmit()">送出 3 張</button>`;
+  html += '</div>';
+  return html;
+}
+
+function renderResolveDetails() {
+  const log = state.log.find(l => l.kind === 'cards' && l.day === state.day && l.loop === state.loop);
+  if (!log) return '';
+  let html = '';
+  for (const g of log.groups) {
+    const tName = targetName(g.target);
+    html += `<div class="resolve-detail">
+      <div class="target-name">${tName}</div>
+      <div style="margin:3px 0;">`;
+    g.plays.forEach((p, i) => {
+      const cls = `chip ${p.side==='m'?'mastermind':'player'}${g.cancelled.includes(i)?' cancelled':''}`;
+      html += `<span class="${cls}">${p.card.name}（${p.side==='m'?'劇':'玩'}）</span> `;
+    });
+    html += `</div>`;
+    if (g.effects.length > 0) html += `<div class="effects">${g.effects.join('<br>')}</div>`;
+    html += `</div>`;
+  }
+  // 邪教徒 任意能力：抵消同區的禁止密謀
+  const cultistTargets = getCultistAbleTargets();
+  if (cultistTargets.length > 0) {
+    html += `<div class="resolve-detail" style="border:1px solid #d04a6a;">
+      <div class="target-name" style="color:#ff8888;">邪教徒 任意能力（每日一次）</div>
+      <div class="effects" style="margin:4px 0;">劇作家可抵消同區位置上的一張禁止密謀：</div>`;
+    cultistTargets.forEach((t) => {
+      const locName = t.targetLabel;
+      html += `<button class="secondary" style="margin:3px;" onclick="activateCultist(${t.cultistId}, ${t.groupIdx}, ${t.playIdx})">${t.cultistName} 抵消 ${locName} 的禁止密謀</button>`;
+    });
+    html += `</div>`;
+  }
+  return html;
+}
+
+function getCultistAbleTargets() {
+  const todayLog = state.log.find(l => l.kind === 'cards' && l.day === state.day && l.loop === state.loop);
+  if (!todayLog) return [];
+  const ability = { id: 'cultist_neg', freq: 'day' };
+  const out = [];
+  for (const cultist of state.characters) {
+    if (cultist.role !== '邪教徒' || cultist.dead) continue;
+    if (isAbilityUsed(cultist.id, ability)) continue;
+    todayLog.groups.forEach((group, gi) => {
+      // 該位置（地點）或該地的角色
+      let inSameArea = false;
+      if (group.target.type === 'loc') {
+        inSameArea = group.target.id === cultist.position;
+      } else {
+        const ch = state.characters.find(x => x.id === group.target.id);
+        inSameArea = ch && ch.position === cultist.position;
+      }
+      if (!inSameArea) return;
+      group.plays.forEach((p, pi) => {
+        if (p.card.type === 'forbid' && p.card.forbids === 'conspiracy') {
+          out.push({
+            cultistId: cultist.id,
+            cultistName: cultist.name,
+            groupIdx: gi,
+            playIdx: pi,
+            targetLabel: targetName(group.target),
+          });
+        }
+      });
+    });
+  }
+  return out;
+}
+
+function activateCultist(cultistId, groupIdx, playIdx) {
+  const ability = { id: 'cultist_neg', freq: 'day' };
+  if (isAbilityUsed(cultistId, ability)) return;
+  const todayLog = state.log.find(l => l.kind === 'cards' && l.day === state.day && l.loop === state.loop);
+  if (!todayLog) return;
+  const group = todayLog.groups[groupIdx];
+  // 禁止密謀 抵消後，原先被它擋下的 密謀牌 重新生效
+  let restored = 0;
+  group.plays.forEach((p, i) => {
+    if (p.card.type === 'conspiracy' && group.cancelled.includes(i)) {
+      if (group.target.type === 'loc') {
+        const loc = state.locations.find(l => l.id === group.target.id);
+        loc.conspiracy += p.card.delta;
+      } else {
+        const ch = state.characters.find(x => x.id === group.target.id);
+        ch.conspiracy += p.card.delta;
+      }
+      restored += p.card.delta;
+      group.cancelled = group.cancelled.filter(idx => idx !== i);
+    }
+  });
+  // 禁止密謀本身視為被抵消
+  if (!group.cancelled.includes(playIdx)) group.cancelled.push(playIdx);
+  group.effects.push(`邪教徒 抵消禁止密謀，密謀 +${restored}`);
+  markAbilityUsed(cultistId, ability);
+  render();
+}
+
+function renderMasterAbilityDetails() {
+  let html = `<div class="event-banner">
+    <div class="ev-title">劇作家任意能力</div>
+    <div class="ev-desc">劇作家可發動具備「任意」能力的身分（每能力依限制次數）與規則綁定能力。完成後進入友好階段。</div>
+  </div>`;
+  // 規則綁定能力
+  const ruleAbils = getRuleMasterAbilities();
+  for (const ra of ruleAbils) {
+    const used = !isRuleAbilityActivatable(ra);
+    let status;
+    if (used) status = '<span style="color:#888;">已用</span>';
+    else status = `<button class="primary" style="width:auto; padding:4px 10px; margin:0;" onclick="tryUseRuleAbility('${ra.slot}')">使用</button>`;
+    html += `<div class="resolve-detail">
+      <div class="target-name">[規則 ${ra.slot}] ${ra.ruleName}</div>
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:3px 0; font-size:11px;">
+        <span>${ra.ability.desc}</span>
+        ${status}
+      </div>
+    </div>`;
+  }
+  for (const c of state.characters) {
+    const abilities = getMasterAbilitiesFor(c);
+    if (abilities.length === 0 || c.dead || c.offBoard) continue;
+    let abilHtml = '';
+    abilities.forEach((a, i) => {
+      const used = isMasterAbilityUsed(c.id, a);
+      let status;
+      if (used) status = '<span style="color:#888;">已用</span>';
+      else if (a.check && !a.check(state, c)) status = `<span style="color:#888;">條件未成立</span>`;
+      else status = `<button class="primary" style="width:auto; padding:4px 10px; margin:0;" onclick="tryUseMasterAbility(${c.id}, ${i})">使用</button>`;
+      abilHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:3px 0; font-size:11px;">
+        <span>${a.desc}</span>
+        ${status}
+      </div>`;
+    });
+    if (!abilHtml) continue;
+    html += `<div class="resolve-detail">
+      <div class="target-name">${c.name}</div>
+      ${abilHtml}
+    </div>`;
+  }
+  if (state.masterAbilityLog && state.masterAbilityLog.length > 0) {
+    html += `<div class="resolve-detail" style="border:1px solid #d04a6a;">
+      <div class="target-name" style="color:#ff8888;">已發動結果</div>
+      <div class="effects">${state.masterAbilityLog.join('<br>')}</div>
+    </div>`;
+  }
+  if (state.pendingChoice && state.pendingChoice.type === 'masterTarget') {
+    const pc = state.pendingChoice;
+    const cands = getMasterTargetCandidates(pc.charId, pc.abilIdx);
+    html += `<div class="resolve-detail"><div class="target-name">請選擇目標</div>`;
+    for (const ct of cands) {
+      html += `<button class="secondary" style="margin:3px; padding:6px 12px;" onclick="resolveMasterAbility(${pc.charId}, ${pc.abilIdx}, '${ct.kind}:${ct.id}')">${ct.label}</button>`;
+    }
+    html += `<br><button class="secondary" style="margin-top:6px;" onclick="state.pendingChoice=null; render();">取消</button>`;
+    html += '</div>';
+  }
+  // 規則能力目標選擇
+  if (state.pendingChoice && state.pendingChoice.type === 'ruleTarget') {
+    const pc = state.pendingChoice;
+    const cands = getRuleTargetCandidates(pc.slot);
+    html += `<div class="resolve-detail"><div class="target-name">請選擇規則 ${pc.slot} 能力的目標</div>`;
+    for (const ct of cands) {
+      html += `<button class="secondary" style="margin:3px; padding:6px 12px;" onclick="resolveRuleAbility('${pc.slot}', '${ct.kind}:${ct.id}')">${ct.label}</button>`;
+    }
+    html += `<br><button class="secondary" style="margin-top:6px;" onclick="state.pendingChoice=null; render();">取消</button>`;
+    html += '</div>';
+  }
+  return html;
+}
+
+function renderFriendlyDetails() {
+  let html = '';
+  // 提示
+  html += `<div class="event-banner">
+    <div class="ev-title">友好能力階段</div>
+    <div class="ev-desc">玩家可嘗試發動角色的友好能力（須達友好門檻 + 條件成立）。每次嘗試都會先交給劇作家裁定，避免暴露角色是否具備無視友好。</div>
+  </div>`;
+  if (state.publicMasterAbilityLog && state.publicMasterAbilityLog.length > 0) {
+    html += `<div class="resolve-detail" style="border:1px solid #f0c674;">
+      <div class="target-name" style="color:#f0c674;">本日劇作家能力公開說明</div>
+      <div class="effects">${state.publicMasterAbilityLog.join('<br>')}</div>
+    </div>`;
+  }
+  // 各角色可用 / 不可用列表
+  for (const c of state.characters) {
+    const abilities = CHAR_ABILITIES[c.name] || [];
+    if (abilities.length === 0) continue;
+    if (c.dead) continue;
+    let abilHtml = '';
+    abilities.forEach((a, i) => {
+      const ok = isAbilityActivatable(c, a);
+      const used = isAbilityUsed(c.id, a);
+      let status;
+      if (used) status = '<span style="color:#888;">已用</span>';
+      else if (c.friendly < a.threshold) status = `<span style="color:#888;">需友好≥${a.threshold}</span>`;
+      else if (a.check && !a.check(state, c)) status = `<span style="color:#888;">條件未成立</span>`;
+      else status = `<button class="primary" style="width:auto; padding:4px 10px; margin:0;" onclick="tryUseAbility(${c.id}, ${i})">使用</button>`;
+      abilHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:3px 0; font-size:11px;">
+        <span>友好 ${a.threshold}：${a.desc}</span>
+        ${status}
+      </div>`;
+    });
+    if (!abilHtml) continue;
+    html += `<div class="resolve-detail">
+      <div class="target-name">${c.name}（友好 ${c.friendly}）</div>
+      ${abilHtml}
+    </div>`;
+  }
+  // 友好階段紀錄
+  if (state.friendlyLog && state.friendlyLog.length > 0) {
+    html += `<div class="resolve-detail" style="border:1px solid #88ff88;">
+      <div class="target-name" style="color:#88ff88;">已發動結果</div>
+      <div class="effects">${state.friendlyLog.join('<br>')}</div>
+    </div>`;
+  }
+  // 待選目標 UI
+  if (state.pendingChoice && state.pendingChoice.type === 'friendlyTarget') {
+    const pc = state.pendingChoice;
+    const cands = getFriendlyTargetCandidates(pc.charId, pc.abilIdx);
+    html += `<div class="resolve-detail"><div class="target-name">請選擇目標</div>`;
+    for (const ct of cands) {
+      const idPart = ct.id;
+      html += `<button class="secondary" style="margin:3px; padding:6px 12px;" onclick="resolveFriendlyAbility(${pc.charId}, ${pc.abilIdx}, '${ct.kind}:${idPart}')">${ct.label}</button>`;
+    }
+    html += `<br><button class="secondary" style="margin-top:6px;" onclick="cancelFriendlyTarget()">取消</button>`;
+    html += '</div>';
+  }
+  // 巫師：玩家可選是否公開身分並 ex+1
+  if (state.pendingChoice && state.pendingChoice.type === 'wizardChoice') {
+    const c = state.characters.find(x => x.id === state.pendingChoice.charId);
+    html += `<div class="resolve-detail" style="border:1px solid #f0c674;">
+      <div class="target-name" style="color:#f0c674;">巫師結算 — 玩家可選</div>
+      <div class="effects" style="margin:4px 0;">巫師發動友好能力後，玩家可選擇是否公開其身分並使 ex 槽 +1（拒絕則無此副作用）。</div>
+      <button class="primary" style="margin:3px; width:auto; padding:6px 14px;" onclick="wizardChoice(true)">公開並 ex+1</button>
+      <button class="secondary" style="margin:3px; padding:6px 14px;" onclick="wizardChoice(false)">跳過</button>
+    </div>`;
+  }
+  // 友好能力裁定：每次都交給劇作家，但依角色特性限制可選項
+  if (state.pendingChoice && state.pendingChoice.type === 'masterRejectDecision') {
+    const pc = state.pendingChoice;
+    const c = state.characters.find(x => x.id === pc.charId);
+    const ability = CHAR_ABILITIES[c.name][pc.abilIdx];
+    const mode = pc.decisionMode || 'normal';
+    const modeText = mode === 'absolute' ? '絕對無視友好：只能拒絕' : (mode === 'ignore' ? '無視友好：可接受或拒絕' : '一般角色：只能接受');
+    const allowDisabled = mode === 'absolute' ? 'disabled style="margin:3px; width:auto; padding:6px 14px; opacity:0.4;"' : 'style="margin:3px; width:auto; padding:6px 14px;"';
+    const denyDisabled = mode === 'normal' ? 'disabled style="margin:3px; opacity:0.4;"' : 'style="margin:3px;"';
+    html += `<div class="resolve-detail" style="border:1px solid #d04a6a;">
+      <div class="target-name" style="color:#ff8888;">劇作家裁定友好能力</div>
+      <div class="effects" style="margin:4px 0;">玩家嘗試發動 ${c.name} 的友好能力：${ability.desc}<br>裁定限制：${modeText}</div>
+      <button class="primary" ${allowDisabled} onclick="masterAllowFriendly()">接受，能力發動</button>
+      <button class="danger" ${denyDisabled} onclick="masterDenyFriendly()">拒絕，能力無效並 ex+1</button>
+    </div>`;
+  }
+  // 情報商 友好5 多步驟
+  if (state.pendingChoice && state.pendingChoice.type === 'informantReveal') {
+    const pc = state.pendingChoice;
+    if (pc.step === 1) {
+      html += `<div class="resolve-detail"><div class="target-name">情報商 — 步驟 1：玩家聲明一條 X 規則</div>`;
+      for (const ruleName of Object.keys(RULE_X_DEFS)) {
+        html += `<button class="secondary" style="margin:3px;" onclick="informantDeclare('${ruleName}')">${ruleName}</button>`;
+      }
+      html += `<br><button class="secondary" style="margin-top:6px;" onclick="cancelFriendlyTarget()">取消</button></div>`;
+    } else if (pc.step === 2) {
+      html += `<div class="resolve-detail"><div class="target-name">情報商 — 步驟 2：劇作家選擇要公開的 X 規則（必須非「${pc.declaredRule}」）</div>`;
+      ['X1','X2'].forEach(which => {
+        const rn = state.script[which];
+        if (!rn) return;
+        const disabled = rn === pc.declaredRule;
+        html += `<button class="${disabled?'secondary':'primary'}" style="margin:3px; ${disabled?'opacity:0.4;':''} width:auto; padding:6px 14px;" ${disabled?'':`onclick="informantReveal('${which}')"`}>${which}：${rn}${disabled?' (與聲明相同 不可選)':''}</button>`;
+      });
+      html += `<br><button class="secondary" style="margin-top:6px;" onclick="informantBackStep()">回上一步</button>
+        <button class="secondary" style="margin-top:6px;" onclick="cancelFriendlyTarget()">取消</button></div>`;
+    }
+  }
+  // 鑑別員 多步驟
+  if (state.pendingChoice && state.pendingChoice.type === 'forensicMove') {
+    const pc = state.pendingChoice;
+    const c = state.characters.find(x => x.id === pc.charId);
+    if (pc.step === 1) {
+      const cands = state.characters.filter(x => x.position === c.position && x.id !== c.id && !x.dead);
+      html += `<div class="resolve-detail"><div class="target-name">鑑別員 — 步驟 1：選擇來源角色</div>`;
+      for (const cd of cands) {
+        const has = (cd.anxiety>=1 || cd.conspiracy>=1 || cd.friendly>=1);
+        if (!has) continue;
+        html += `<button class="secondary" style="margin:3px;" onclick="forensicSelectSource(${cd.id})">${cd.name}</button>`;
+      }
+      html += `<br><button class="secondary" style="margin-top:6px;" onclick="cancelFriendlyTarget()">取消</button>`;
+      html += '</div>';
+    } else if (pc.step === 2) {
+      const src = state.characters.find(x => x.id === pc.sourceId);
+      html += `<div class="resolve-detail"><div class="target-name">鑑別員 — 步驟 2：選擇指示物（來源：${src.name}）</div>`;
+      if (src.anxiety >= 1)    html += `<button class="secondary" style="margin:3px;" onclick="forensicSelectMarker('anxiety')">不安 (${src.anxiety})</button>`;
+      if (src.conspiracy >= 1) html += `<button class="secondary" style="margin:3px;" onclick="forensicSelectMarker('conspiracy')">角色密謀 (${src.conspiracy})</button>`;
+      if (src.friendly >= 1)   html += `<button class="secondary" style="margin:3px;" onclick="forensicSelectMarker('friendly')">友好 (${src.friendly})</button>`;
+      html += `<br><button class="secondary" style="margin-top:6px;" onclick="forensicBackStep()">回上一步</button>
+        <button class="secondary" style="margin-top:6px;" onclick="cancelFriendlyTarget()">取消</button>`;
+      html += '</div>';
+    } else if (pc.step === 3) {
+      const src = state.characters.find(x => x.id === pc.sourceId);
+      const labelMap = { anxiety:'不安', conspiracy:'角色密謀', friendly:'友好' };
+      const cands = state.characters.filter(x => x.position === c.position && x.id !== c.id && x.id !== pc.sourceId && !x.dead);
+      html += `<div class="resolve-detail"><div class="target-name">鑑別員 — 步驟 3：選擇接收角色（${src.name} 的 1 枚 ${labelMap[pc.markerType]} 移到目標）</div>`;
+      for (const cd of cands) {
+        html += `<button class="secondary" style="margin:3px;" onclick="forensicSelectDest(${cd.id})">${cd.name}</button>`;
+      }
+      html += `<br><button class="secondary" style="margin-top:6px;" onclick="forensicBackStep()">回上一步</button>
+        <button class="secondary" style="margin-top:6px;" onclick="cancelFriendlyTarget()">取消</button>`;
+      html += '</div>';
+    }
+  }
+  return html;
+}
+
+function renderEventDetails() {
+  const o = state.eventOutcome;
+  if (!o) {
+    return `<div class="event-banner">
+      <div class="ev-title">本日無事件</div>
+      <div class="ev-desc">沒有事件需要判定，直接進入日終處理。</div>
+    </div>`;
+  }
+  // 當事人 / 觸發原因 / 觸發判定值屬於劇作家機密，不在共用畫面顯示。
+  const eventDesc = EVENT_DEFS[o.event]?.desc || '';
+  let html = `<div class="event-banner">
+    <div class="ev-title">${o.event}</div>
+    <div class="ev-desc">事件效果：${eventDesc}</div>
+    <div style="margin-top:6px; font-size:11px;">
+      狀態：<span class="event-status ${o.triggered?'triggered':'not-triggered'}">${o.triggered?'已觸發':'未觸發'}</span>
+    </div>
+  </div>`;
+  html += `<div class="resolve-detail" style="border:1px solid #f0c674;">
+    <div class="target-name" style="color:#f0c674;">事件公開說明</div>
+    <div class="effects">${o.triggered ? `事件已觸發，依照事件效果進行結算。${eventDesc}` : `事件未觸發，因此不執行事件效果。`}</div>
+  </div>`;
+  if (o.log && o.log.length > 0) {
+    html += `<div class="resolve-detail"><div class="target-name">處理結果</div>
+      <div class="effects">${o.log.join('<br>')}</div></div>`;
+  } else if (o.triggered && state.pendingChoice) {
+    html += `<div class="resolve-detail"><div class="target-name">處理結果</div>
+      <div class="effects">事件需要由指定玩家完成選擇後才會產生完整結果。</div></div>`;
+  }
+  if (state.pendingChoice) {
+    html += renderPendingChoice();
+  }
+  if (state.loopResult === 'lose') {
+    html += `<div class="resolve-detail" style="border:1px solid #d04a6a;">
+      <div class="target-name" style="color:#ff6666;">玩家已輸掉本輪</div>
+    </div>`;
+  }
+  return html;
+}
+
+function renderPendingChoice() {
+  const pc = state.pendingChoice;
+  if (pc.type === 'mastermindKill') {
+    let html = `<div class="resolve-detail"><div class="target-name">劇作家請選一名同地角色死亡</div>`;
+    for (const id of pc.candidates) {
+      const c = state.characters.find(x => x.id === id);
+      html += `<button class="danger" style="margin:3px;" onclick="resolveMastermindKill(${id})">${c.name}</button>`;
+    }
+    html += '</div>';
+    return html;
+  }
+  if (pc.type === 'mastermindUnease') {
+    let html = `<div class="resolve-detail"><div class="target-name">劇作家：${pc.step===1?'選擇 +1 不安 的角色':'選擇 +1 角色密謀 的角色'}</div>`;
+    for (const c of state.characters) {
+      if (c.dead) continue;
+      html += `<button class="secondary" style="margin:3px;" onclick="resolveUnease(${pc.step}, ${c.id})">${c.name}</button>`;
+    }
+    html += '</div>';
+    return html;
+  }
+  if (pc.type === 'playerKill') {
+    let html = `<div class="resolve-detail"><div class="target-name">玩家：選一名角色死亡</div>`;
+    for (const c of state.characters) {
+      if (c.dead) continue;
+      html += `<button class="danger" style="margin:3px;" onclick="resolvePlayerKill(${c.id})">${c.name}</button>`;
+    }
+    html += '</div>';
+    return html;
+  }
+  if (pc.type === 'missingDest') {
+    const c = state.characters.find(x => x.id === pc.characterId);
+    const def = CHAR_DEFS[c.name];
+    const isUnlocked = state.movementUnlocked && state.movementUnlocked.has(c.name);
+    const forbidden = isUnlocked ? [] : ((def && def.forbidden) || []);
+    let html = `<div class="resolve-detail"><div class="target-name">劇作家：選擇 ${c.name} 的失蹤目的地（禁區無法選）</div>`;
+    for (let q = 1; q <= 4; q++) {
+      const banned = forbidden.includes(q);
+      if (banned) {
+        html += `<button class="secondary" style="margin:3px; opacity:0.4; cursor:not-allowed;" disabled>${quadName(q)}（禁區）</button>`;
+      } else {
+        html += `<button class="primary" style="margin:3px;" onclick="resolveMissingDest(${c.id}, ${q})">${quadName(q)}</button>`;
+      }
+    }
+    html += '</div>';
+    return html;
+  }
+  return '';
+}
+
+function renderLoopEnd() {
+  const isWin = state.loopResult === 'win';
+  return `<div class="main-grid"><div class="panel" style="overflow-y:auto;">
+    <h3>輪 ${state.loop} 結束</h3>
+    <div class="resolve-detail">
+      <div class="target-name" style="color:${isWin?'#88ff88':'#ff6666'};">${isWin?'本輪：玩家獲勝':'本輪：玩家失敗'}</div>
+      ${isWin ? `<div class="effects">${state.loopReason}</div>` : ''}
+    </div>
+    <div style="margin-top:8px;">過往結果：</div>
+    ${state.pastLoops.map(l => `<div class="resolve-detail" style="font-size:11px;">輪 ${l.loop}：<b style="color:${l.result==='win'?'#88ff88':'#ff6666'};">${l.result==='win'?'勝':'敗'}</b>${l.result==='win'?'　'+l.reason:''}</div>`).join('')}
+    <button class="primary" onclick="continueAfterLoop()">${isWin ? '玩家已勝利 → 結束' : (state.loop >= state.script.loops ? '所有輪結束 → 進入猜身分' : `進入第 ${state.loop+1} 輪`)}</button>
+  </div>
+  <div class="panel"><h3>歷程紀錄</h3><div class="log-panel">${renderLog()}</div></div>
+  </div>`;
+}
+
+function renderGameOver() {
+  const isWin = state.overallResult === 'win';
+  let html = `<div class="main-grid"><div class="panel" style="overflow-y:auto;">
+    <h3>遊戲結束</h3>
+    <div class="resolve-detail" style="border:2px solid ${isWin?'#88ff88':'#d04a6a'};">
+      <div class="target-name" style="color:${isWin?'#88ff88':'#ff6666'}; font-size:18px;">
+        ${isWin ? '🏆 玩家勝利' : '💀 劇作家勝利'}
+      </div>
+      <div class="effects" style="font-size:13px;">${state.overallReason || ''}</div>
+    </div>
+    <div style="margin:10px 0 4px; color:#a0a0c0; font-size:12px;">過往輪迴：</div>
+    ${state.pastLoops.map(l => `<div class="resolve-detail">輪 ${l.loop}：<b style="color:${l.result==='win'?'#88ff88':'#ff6666'};">${l.result==='win'?'存活':'失敗'}</b>　${l.reason}</div>`).join('')}`;
+  // 若有猜身分結果，顯示
+  if (state.guessDetail) {
+    html += `<div style="margin:10px 0 4px; color:#a0a0c0; font-size:12px;">猜身分結果（${state.guessCorrect}/${state.guessTotal}）：</div>`;
+    for (const g of state.guessDetail) {
+      html += `<div class="resolve-detail" style="font-size:11px;">
+        <b>${g.name}</b>　猜：${g.guess || '(未填)'}　答：<span style="color:${g.correct?'#88ff88':'#ff6666'};">${g.role}</span>　${g.correct?'✓':'✗'}
+      </div>`;
+    }
+  } else {
+    // 玩家透過存活贏，仍揭示所有身分
+    html += `<div style="margin:10px 0 4px; color:#a0a0c0; font-size:12px;">所有身分揭示：</div>`;
+    for (const c of state.characters) {
+      html += `<div class="resolve-detail" style="font-size:11px;"><b>${c.name}</b>　${c.role}</div>`;
+    }
+  }
+  html += `<button class="primary" onclick="state=null; render();">回到劇本設定</button>
+  </div>
+  <div class="panel"><h3>歷程紀錄</h3><div class="log-panel">${renderLog()}</div></div>
+  </div>`;
+  return html;
+}
+
+function renderExFriendly() {
+  let html = `<div class="main-grid"><div class="panel" style="overflow-y:auto;">
+    <h3>輪 ${state.loop} 開始 — ex 槽效果</h3>
+    <div style="background:#4a3a1a; border:1px solid #f0c674; border-radius:6px; padding:8px; margin-bottom:10px; font-size:12px; color:#ffe8a0;">
+      ex 槽 ≥ 1：選擇一名角色，放置 2 枚友好
+    </div>`;
+  for (const c of state.characters) {
+    if (c.dead) continue;
+    html += `<button class="primary" style="margin:4px; width:auto; padding:8px 14px;" onclick="applyExFriendly(${c.id})">${c.name}</button>`;
+  }
+  html += `</div>
+  <div class="panel"><h3>歷程紀錄</h3><div class="log-panel">${renderLog()}</div></div>
+  </div>`;
+  return html;
+}
+
+function renderGuessPhase() {
+  const availableRoles = [...new Set(state.script.characters.map(c => c.role))];
+  let html = `<div class="main-grid"><div class="panel" style="overflow-y:auto;">
+    <h3>最終 — 猜出所有角色身分</h3>
+    <div style="background:#4a3a1a; border:1px solid #f0c674; border-radius:6px; padding:8px; margin-bottom:10px; font-size:12px; color:#ffe8a0;">
+      ${state.script.loops} 輪皆未存活。最後機會：將每位角色配對到正確身分，全部正確即玩家勝利。
+    </div>`;
+  for (const c of state.characters) {
+    const sel = state.guesses[c.id] || '';
+    html += `<div class="resolve-detail">
+      <div class="target-name">${c.name}</div>
+      <select onchange="setGuess(${c.id}, this.value)"
+        style="margin-top:5px; padding:5px 8px; background:#1a1a2e; color:#e8e8f0; border:1px solid #3a3a5c; border-radius:4px; font-size:12px;">
+        <option value="">-- 請選擇身分 --</option>
+        ${availableRoles.map(r => `<option value="${r}" ${sel===r?'selected':''}>${r}</option>`).join('')}
+      </select>
+    </div>`;
+  }
+  const allGuessed = state.characters.every(c => state.guesses[c.id]);
+  html += `<button class="primary" ${allGuessed?'':'disabled'} onclick="submitGuess()">確認猜測</button>
+  </div>
+  <div class="panel"><h3>歷程紀錄</h3><div class="log-panel">${renderLog()}</div></div>
+  </div>`;
+  return html;
+}
+
+function renderLog() {
+  if (state.log.length === 0) return '<div style="color:#666; font-size:10px;">尚無紀錄</div>';
+  let html = '';
+  let lastKey = '';
+  for (const entry of state.log) {
+    const k = `L${entry.loop}D${entry.day}`;
+    if (k !== lastKey) {
+      html += `<div class="log-day-header">輪 ${entry.loop} · 第 ${entry.day} 天</div>`;
+      lastKey = k;
+    }
+    if (entry.kind === 'cards') {
+      for (const g of entry.groups) {
+        const tName = targetName(g.target);
+        html += `<div class="log-entry"><b>${tName}</b>：`;
+        g.plays.forEach((p, i) => {
+          const ct = g.cancelled.includes(i) ? 'cancelled' : '';
+          html += `<span class="chip ${p.side==='m'?'mastermind':'player'} ${ct}" style="margin:1px;">${p.card.name}</span>`;
+        });
+        if (g.effects.length > 0) {
+          html += `<div style="font-size:9px; color:#888; margin-top:2px;">${g.effects.join(' / ')}</div>`;
+        }
+        html += `</div>`;
+      }
+    } else if (entry.kind === 'event') {
+      // 當事人為機密，不在公開紀錄顯示（劇作家可在其機密面板對照）
+      html += `<div class="log-entry event"><b>事件 ${entry.event}</b> ${entry.triggered?'已觸發':'未觸發'}`;
+      if (entry.log && entry.log.length > 0) {
+        html += `<div style="font-size:9px; color:#888; margin-top:2px;">${entry.log.join(' / ')}</div>`;
+      }
+      html += `</div>`;
+    } else if (entry.kind === 'friendly') {
+      html += `<div class="log-entry" style="border-left-color:#88ff88;"><b>友好階段</b>`;
+      if (entry.log && entry.log.length > 0) {
+        html += `<div style="font-size:9px; color:#888; margin-top:2px;">${entry.log.join(' / ')}</div>`;
+      }
+      html += `</div>`;
+    }
+  }
+  return html;
+}
+
+function renderConfirmModal() {
+  const isM = state.phase === 'mastermind';
+  const plays = isM ? state.mPlays : state.pPlays;
+  let listHtml = '';
+  for (const p of plays) {
+    const c = getCard(isM?'m':'p', p.cardId);
+    listHtml += `<div class="confirm-row"><b>${c.name}</b> → ${targetName(p.target)}</div>`;
+  }
+  return `
+    <div class="overlay">
+      <div class="modal">
+        <h2>確認送出</h2>
+        <p>送出後本日出牌就無法修改。確認以下 3 張？</p>
+        <div class="confirm-list">${listHtml}</div>
+        <div class="modal-actions">
+          <button class="cancel" onclick="cancelSubmit()">取消修改</button>
+          <button class="confirm" onclick="doSubmit()">確認送出</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// =========================================
+// 互動
+// =========================================
+function startGame() {
+  const text = document.getElementById('scriptInput').value;
+  const script = parseScript(text);
+  const errs = validateScript(script);
+  if (errs.length > 0) {
+    document.getElementById('setupErr').innerHTML = '錯誤：' + errs.join('；');
+    return;
+  }
+  if (Net.enabled && !Net.suppressBroadcast) {
+    Net.send({ action: 'startGameRemote', script });
+  }
+  actuallyStartGame(script);
+}
+
+function actuallyStartGame(script) {
+  newGame(script);
+  if (Net.enabled) {
+    // 網路模式：劇作家直接進 mastermind 階段；玩家進等待
+    if (Net.role === 'mastermind') {
+      state.phase = 'mastermind';
+      // 若有 dynamicInit 角色 → masterPickInit
+      const needsInit = state.characters.some(c => CHAR_DEFS[c.name]?.dynamicInit && !c.dead && c.position === null);
+      if (needsInit) state.phase = 'masterPickInit';
+    } else {
+      state.phase = 'netWaiting';
+      state.netWaitingFor = 'mastermind';
+    }
+  } else {
+    state.phase = 'switch';
+    state.nextRoleLabel = '劇作家';
+    state.nextPhase = 'mastermind';
+  }
+  render();
+}
+
+function selectCard(cardId) {
+  const isM = state.phase === 'mastermind';
+  const usedCount = isM ? state.mUsedOnceCount : state.pUsedOnceCount;
+  const plays = isM ? state.mPlays : state.pPlays;
+  const card = getCard(isM?'m':'p', cardId);
+  const effCount = !isM ? getCardEffectiveCount(card) : card.count;
+  const playedToday = plays.filter(p => p.cardId === cardId).length;
+  if (card.once) {
+    // 一次性卡：每張用一次後消失，有 count 張可用
+    const usedPast = (usedCount[cardId] || 0);
+    if (usedPast + playedToday >= effCount) return;
+  } else {
+    // 非一次性：每天最多 count 次
+    if (playedToday >= effCount) return;
+  }
+  if (plays.length >= 3) return;
+  state.selectedCard = cardId;
+  render();
+}
+function clearSelection() { state.selectedCard = null; render(); }
+
+function onClickTarget(type, id) {
+  if (!state.selectedCard) return;
+  const target = { type, id };
+  if (!isSelectableTarget(target)) return;
+  const isM = state.phase === 'mastermind';
+  const plays = isM ? state.mPlays : state.pPlays;
+  plays.push({ cardId: state.selectedCard, target });
+  state.selectedCard = null;
+  render();
+}
+
+function removePlay(idx) {
+  const isM = state.phase === 'mastermind';
+  const plays = isM ? state.mPlays : state.pPlays;
+  plays.splice(idx, 1);
+  render();
+}
+function removePlayByTarget(type, id) {
+  const isM = state.phase === 'mastermind';
+  const plays = isM ? state.mPlays : state.pPlays;
+  const idx = plays.findIndex(p => p.target.type === type && p.target.id === id);
+  if (idx >= 0) { plays.splice(idx, 1); render(); }
+}
+
+function askSubmit() { pendingConfirm = true; render(); }
+function cancelSubmit() { pendingConfirm = null; render(); }
+function doSubmit() {
+  pendingConfirm = null;
+  if (Net.enabled && !Net.suppressBroadcast) {
+    if (state.phase === 'mastermind') {
+      // 線上：發送全部出牌（伺服器只把目標轉給玩家，內容暫存）
+      Net.send({ action: 'mSubmit', plays: state.mPlays });
+      state.phase = 'netWaiting';
+      state.netWaitingFor = 'player';
+      render();
+      return;
+    }
+    if (state.phase === 'player') {
+      Net.send({ action: 'pSubmit', plays: state.pPlays });
+      state.phase = 'netWaiting';
+      state.netWaitingFor = 'resolve';
+      render();
+      return;
+    }
+  }
+  // 本機模式
+  if (state.phase === 'mastermind') {
+    state.phase = 'switch';
+    state.nextRoleLabel = '玩家';
+    state.nextPhase = 'player';
+    render();
+  } else if (state.phase === 'player') {
+    resolveCards();
+    state.phase = 'resolve';
+    render();
+  }
+}
+
+function proceedToEvent() {
+  startEventPhase();
+}
+
+function confirmHandoff() {
+  state.phase = state.nextPhase;
+  state.selectedCard = null;
+  // 進入劇作家階段且有 dynamicInit 角色尚未選位 → 先 masterPickInit
+  if (state.phase === 'mastermind') {
+    const needsInit = state.characters.some(c => CHAR_DEFS[c.name]?.dynamicInit && !c.dead && c.position === null);
+    if (needsInit) state.phase = 'masterPickInit';
+  }
+  render();
+}
+
+function pickInitPos(qid) {
+  if (state.phase !== 'masterPickInit') return;
+  const c = state.characters.find(x => CHAR_DEFS[x.name]?.dynamicInit && !x.dead && x.position === null);
+  if (!c) { state.phase = 'mastermind'; render(); return; }
+  c.position = qid;
+  state.log.unshift({ day: state.day, loop: state.loop, kind: 'init', log: [`劇作家設定 ${c.name} 初始位置：${quadName(qid)}`] });
+  // 檢查還有沒有其他需要選位
+  const more = state.characters.some(x => CHAR_DEFS[x.name]?.dynamicInit && !x.dead && x.position === null);
+  if (!more) state.phase = 'mastermind';
+  render();
+}
+
+function renderMasterPickInit() {
+  const c = state.characters.find(x => CHAR_DEFS[x.name]?.dynamicInit && !x.dead && x.position === null);
+  if (!c) return '';
+  return `<div class="main-grid"><div class="panel" style="overflow-y:auto;">
+    <h3>🎭 劇作家：選擇 ${c.name} 的初始位置</h3>
+    <div style="background:#4a3a1a; border:1px solid #f0c674; border-radius:6px; padding:8px; margin:8px 0; font-size:12px; color:#ffe8a0;">
+      此角色每輪由劇作家動態決定初始位置（不會公開給玩家）。
+    </div>
+    <div class="resolve-detail">
+      <button class="primary" style="margin:6px; width:auto; padding:10px 22px;" onclick="pickInitPos(1)">神社</button>
+      <button class="primary" style="margin:6px; width:auto; padding:10px 22px;" onclick="pickInitPos(2)">醫院</button>
+      <button class="primary" style="margin:6px; width:auto; padding:10px 22px;" onclick="pickInitPos(3)">都會</button>
+      <button class="primary" style="margin:6px; width:auto; padding:10px 22px;" onclick="pickInitPos(4)">學校</button>
+    </div>
+  </div>
+  <div class="panel"><h3>歷程紀錄</h3><div class="log-panel">${renderLog()}</div></div>
+  </div>`;
+}
+
+// =========================================
+// 啟動
+// =========================================
+function setupNetworkActionWrappers() {
+  // 只包裝由「使用者點擊」觸發的入口；內部呼叫的函式不包裝以免重複廣播
+  const actionsToWrap = [
+    // 階段轉換按鈕
+    'startMasterAbilityPhase','endMasterAbilityPhase','endFriendlyPhase',
+    'finishDay','continueAfterLoop',
+    // 劇作家能力
+    'tryUseMasterAbility','resolveMasterAbility',
+    'tryUseRuleAbility','resolveRuleAbility',
+    'activateCultist',
+    // 友好能力
+    'tryUseAbility','resolveFriendlyAbility','cancelFriendlyTarget',
+    'masterAllowFriendly','masterDenyFriendly','wizardChoice',
+    'forensicSelectSource','forensicSelectMarker','forensicSelectDest','forensicBackStep',
+    'informantDeclare','informantReveal','informantBackStep',
+    // 事件選擇
+    'resolveMastermindKill','resolveUnease','resolvePlayerKill','resolveMissingDest',
+    // 其他點擊
+    'submitGuess','setGuess','applyExFriendly','pickInitPos',
+  ];
+  for (const name of actionsToWrap) Net.wrap(name);
+}
+setupNetworkActionWrappers();
+
+// 初始顯示模式選擇
+document.getElementById('app').innerHTML = renderModeChoice();
+</script>
+</body>
+</html>
